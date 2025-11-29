@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dental Safe Check</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts (Noto Sans KR) -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .animate-fadeIn {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo } = React;
+
+        // --- Icons (Lucide Style SVGs) ---
+        const Icon = ({ children, color = "currentColor", size = 24, className = "" }) => (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width={size} 
+                height={size} 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke={color} 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className={className}
+            >
+                {children}
+            </svg>
+        );
+
+        const Icons = {
+            Stethoscope: (props) => <Icon {...props}><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v6"/><path d="M11 17a6 6 0 0 1-6-6"/></Icon>,
+            Activity: (props) => <Icon {...props}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></Icon>,
+            AlertTriangle: (props) => <Icon {...props}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></Icon>,
+            CheckCircle: (props) => <Icon {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></Icon>,
+            XCircle: (props) => <Icon {...props}><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></Icon>,
+            ShieldAlert: (props) => <Icon {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></Icon>,
+            FileText: (props) => <Icon {...props}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></Icon>,
+            User: (props) => <Icon {...props}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></Icon>,
+            UserCheck: (props) => <Icon {...props}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></Icon>,
+            ChevronRight: (props) => <Icon {...props}><polyline points="9 18 15 12 9 6"/></Icon>,
+            RefreshCcw: (props) => <Icon {...props}><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></Icon>,
+            HeartPulse: (props) => <Icon {...props}><path d="M19 14c1.49-1.28 3.6-2.34 4.58-2.74a.45.45 0 0 0 .19-.57 2.37 2.37 0 0 0-2.2-1.74c-.9 0-1.74.45-2.2 1.17l-.37.56a.46.46 0 0 1-.77 0l-2.07-3.1a.48.48 0 0 0-.79-.01l-1.37 1.95a.48.48 0 0 1-.77.02l-1.31-1.8a.48.48 0 0 0-.78-.01L4.85 15.3a.48.48 0 0 1-.84-.14L2.8 11.7a.48.48 0 0 0-.85-.09l-1.72 2.45a.45.45 0 0 0 .09.6c1.02.8 3.1 2.1 4.58 2.74a4.34 4.34 0 0 0 3.73-.25L12 15l2.45 1.55a4.34 4.34 0 0 0 3.72.25c.5-.22 1.42-.58 2.23-1.07l.2-.13"/></Icon>,
+            Pill: (props) => <Icon {...props}><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><line x1="8.5" y1="8.5" x2="15.5" y2="15.5"/></Icon>,
+            Syringe: (props) => <Icon {...props}><path d="m18 2 4 4"/><path d="m17 7 3-3"/><path d="M19 9 8.7 19.3c-1 1-2.5 1-3.4 0l-.6-.6c-1-1-1-2.5 0-3.4L15 5"/><path d="m9 11 4 4"/><path d="m5 19-3 3"/></Icon>
+        };
+
+        // --- Data & Logic ---
+
+        const QUESTIONS = [
+            {
+                id: 'hypertension',
+                category: 'cardio',
+                text: '현재 고혈압 진단을 받았거나 혈압약을 복용 중이신가요?',
+                detail: '혈압이 조절되지 않거나(수축기 160 이상), 최근 약을 변경하셨나요?'
+            },
+            {
+                id: 'diabetes',
+                category: 'endocrine',
+                text: '당뇨병이 있거나 인슐린/당뇨약을 사용 중이신가요?',
+                detail: '최근 당화혈색소(HbA1c) 수치를 모르거나, 저혈당 쇼크 경험이 있나요?'
+            },
+            {
+                id: 'anticoagulant',
+                category: 'medication',
+                text: '피를 묽게 하는 약(아스피린, 와파린, 항혈전제 등)을 드시나요?',
+                detail: '심혈관 질환, 뇌졸중 예방 목적으로 복용 중입니다.'
+            },
+            {
+                id: 'osteoporosis',
+                category: 'medication',
+                text: '골다공증 약을 드시거나 주사를 맞으신 적이 있나요?',
+                detail: '비스포스포네이트 계열 약물 복용 혹은 주사 치료 경험.'
+            },
+            {
+                id: 'endocarditis',
+                category: 'cardio',
+                text: '과거에 심내막염을 앓았거나 인공 심장 판막 수술을 받으셨나요?',
+                detail: '선천성 심장 질환 포함.'
+            },
+            {
+                id: 'kidney_liver',
+                category: 'organ',
+                text: '신장(콩팥) 투석 중이거나 심각한 간 질환이 있으신가요?',
+                detail: '간경화, 말기 신부전 등.'
+            },
+            {
+                id: 'pregnancy',
+                category: 'other',
+                text: '현재 임신 중이거나 임신 가능성이 있나요?',
+                detail: '수유 중인 경우도 포함해주세요.'
+            }
+        ];
+
+        const analyzeCondition = (answers) => {
+            let status = 'safe'; 
+            let patientMessage = '오늘 예정된 치료를 받을 수 있습니다.';
+            let doctorNotes = [];
+            let riskLevel = 0;
+
+            // 1. Hypertension
+            if (answers.hypertension) {
+                riskLevel += 1;
+                doctorNotes.push({
+                    type: 'monitor',
+                    title: '고혈압 (Hypertension)',
+                    content: '진료 전 혈압 측정 필수. 160/100mmHg 이상 시 응급 처치 외 elective treatment 연기 고려. Epinephrine 함유 국소마취제 사용 시 주의(2 ample 이하 권장). 리도카인 사용 시 Aspiration 철저.'
+                });
+            }
+
+            // 2. Diabetes
+            if (answers.diabetes) {
+                riskLevel += 1;
+                doctorNotes.push({
+                    type: 'monitor',
+                    title: '당뇨 (Diabetes)',
+                    content: '아침 식사 및 약 복용 여부 확인. 저혈당 쇼크 대비(오렌지 주스 등 구비). HbA1c > 8% 혹은 공복혈당 > 200mg/dL 시 감염 위험 증가로 인한 항생제 처방 및 외과적 시술 주의.'
+                });
+            }
+
+            // 3. Anticoagulants
+            if (answers.anticoagulant) {
+                status = status === 'danger' ? 'danger' : 'caution';
+                patientMessage = '드시는 약으로 인해 지혈이 늦어질 수 있습니다. 의료진과 상담이 필요합니다.';
+                doctorNotes.push({
+                    type: 'warning',
+                    title: '항혈전제/항응고제 복용 (Anticoagulants)',
+                    content: '단순 발치나 치주 치료 시 약물 중단 불필요(일반적 가이드라인). 와파린 복용 시 최근 INR 수치 확인(3.0 미만 시 시술 가능). 광범위 수술 시 내과 협진(Consult) 후 3-5일 중단 혹은 헤파린 브릿지 고려. 국소 지혈제(Surgicel, Gelfoam) 및 봉합 준비.'
+                });
+            }
+
+            // 4. Osteoporosis
+            if (answers.osteoporosis) {
+                status = status === 'danger' ? 'danger' : 'caution';
+                patientMessage = '골다공증 약물 복용 기간에 따라 발치 등 치료에 주의가 필요합니다.';
+                doctorNotes.push({
+                    type: 'danger',
+                    title: '골다공증 약물 (Bisphosphonates/MRONJ Risk)',
+                    content: '복용 기간 및 제형(경구/주사) 확인 필수. 3년 이상 복용 혹은 스테로이드 병용 시 MRONJ 고위험군. 임플란트/발치 시 휴약기(Drug Holiday) 필요 여부 내과 협진 권장. 가능한 보존적 치료 우선.'
+                });
+            }
+
+            // 5. Endocarditis
+            if (answers.endocarditis) {
+                status = 'danger';
+                patientMessage = '심장 보호를 위해 치료 전 예방적 항생제 복용이 필요할 수 있습니다.';
+                doctorNotes.push({
+                    type: 'critical',
+                    title: '감염성 심내막염 고위험군 (IE Prophylaxis)',
+                    content: '출혈이 동반되는 치과 시술 전 예방적 항생제 투여 필수. (성인: Amoxicillin 2g 시술 1시간 전 경구 투여. 페니실린 알러지 시 Clindamycin 600mg 등 대체).'
+                });
+            }
+
+            // 6. Kidney/Liver
+            if (answers.kidney_liver) {
+                status = 'danger';
+                patientMessage = '전신 상태에 따라 약물 처방 및 치료 계획 조정이 필요합니다.';
+                doctorNotes.push({
+                    type: 'warning',
+                    title: '신장/간 기능 저하 (Renal/Hepatic Impairment)',
+                    content: 'NSAIDs, 항생제 등 대사 경로 확인 후 용량 조절 혹은 금기 약물 확인. 투석 환자의 경우 투석 다음 날 치료 권장(헤파린 반감기 고려). 출혈 경향 확인.'
+                });
+            }
+
+            // 7. Pregnancy
+            if (answers.pregnancy) {
+                status = 'caution';
+                patientMessage = '임신 시기(초기/중기/말기)에 따라 치료 가능 여부가 달라집니다.';
+                doctorNotes.push({
+                    type: 'monitor',
+                    title: '임신부 (Pregnancy)',
+                    content: '2기(14~20주)가 가장 안전한 치료 시기. 방사선 촬영 시 납복 필수. NSAIDs 및 테트라사이클린 계열 금기. Acetaminophen 사용 권장. Unit Chair 등받이 조절(저혈압 방지).'
+                });
+            }
+
+            // Comprehensive Check
+            if (status === 'safe' && riskLevel > 0) status = 'caution';
+
+            // Message Adjustment
+            if (status === 'caution') {
+                patientMessage = '의료진 상담 후 안전하게 치료를 진행할 수 있습니다. 복용 중인 약 처방전을 보여주세요.';
+            } else if (status === 'danger') {
+                patientMessage = '안전을 위해 내과 전문의 소견이 필요하거나, 오늘 치료가 미루어질 수 있습니다.';
+            }
+
+            return { status, patientMessage, doctorNotes };
+        };
+
+        // --- Main Component ---
+
+        function DentalScreeningApp() {
+            const [step, setStep] = useState('intro'); // intro, survey, result
+            const [answers, setAnswers] = useState({});
+            const [viewMode, setViewMode] = useState('patient'); // patient, doctor
+
+            const handleAnswer = (id, value) => {
+                setAnswers(prev => ({ ...prev, [id]: value }));
+            };
+
+            const handleNext = () => {
+                setStep('result');
+            };
+
+            const resetApp = () => {
+                setAnswers({});
+                setStep('intro');
+                setViewMode('patient');
+            };
+
+            const result = useMemo(() => analyzeCondition(answers), [answers]);
+            
+            const allAnswered = QUESTIONS.every(q => answers[q.id] !== undefined);
+
+            return (
+                <div className="min-h-screen bg-slate-50 flex justify-center">
+                    <div className="w-full max-w-md bg-white min-h-screen shadow-xl overflow-hidden flex flex-col">
+                        
+                        {/* Header */}
+                        <header className="bg-blue-600 text-white p-4 flex items-center justify-between shadow-md z-10">
+                            <div className="flex items-center gap-2">
+                                <Icons.Stethoscope className="h-6 w-6" />
+                                <h1 className="text-lg font-bold">Dental Safe Check</h1>
+                            </div>
+                            {step === 'result' && (
+                                <button onClick={resetApp} className="text-sm bg-blue-700 px-3 py-1 rounded-full flex items-center gap-1 hover:bg-blue-800 transition">
+                                    <Icons.RefreshCcw size={14} /> 처음으로
+                                </button>
+                            )}
+                        </header>
+
+                        {/* Main Content Area */}
+                        <main className="flex-1 overflow-y-auto p-4">
+                            
+                            {/* STEP 1: Intro */}
+                            {step === 'intro' && (
+                                <div className="flex flex-col items-center justify-center h-full text-center space-y-6 animate-fadeIn">
+                                    <div className="bg-blue-50 p-6 rounded-full">
+                                        <Icons.ShieldAlert className="h-20 w-20 text-blue-600" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-slate-800 mb-2">치과 치료 전<br/>안전 점검</h2>
+                                        <p className="text-slate-500">
+                                            안전한 진료를 위해 환자분의<br/>전신 건강 상태를 체크합니다.<br/>
+                                            (약 1분 소요)
+                                        </p>
+                                    </div>
+                                    <button 
+                                        onClick={() => setStep('survey')}
+                                        className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-blue-700 transition transform active:scale-95"
+                                    >
+                                        자가진단 시작하기
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* STEP 2: Survey */}
+                            {step === 'survey' && (
+                                <div className="space-y-6 pb-20 animate-fadeIn">
+                                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded text-sm text-yellow-800 mb-4">
+                                        정확한 진단을 위해 해당되는 항목에 솔직하게 체크해주세요.
+                                    </div>
+                                    
+                                    {QUESTIONS.map((q) => (
+                                        <div key={q.id} className="bg-white border rounded-xl p-5 shadow-sm hover:shadow-md transition">
+                                            <div className="flex items-start gap-3 mb-3">
+                                                {q.category === 'cardio' && <Icons.HeartPulse className="text-red-500 mt-1 shrink-0" />}
+                                                {q.category === 'medication' && <Icons.Pill className="text-green-500 mt-1 shrink-0" />}
+                                                {q.category === 'endocrine' && <Icons.Activity className="text-orange-500 mt-1 shrink-0" />}
+                                                {(q.category === 'organ' || q.category === 'other') && <Icons.Syringe className="text-purple-500 mt-1 shrink-0" />}
+                                                
+                                                <div>
+                                                    <h3 className="font-bold text-lg leading-tight">{q.text}</h3>
+                                                    <p className="text-xs text-slate-400 mt-1">{q.detail}</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-2 gap-3 mt-4">
+                                                <button 
+                                                    onClick={() => handleAnswer(q.id, true)}
+                                                    className={`py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2
+                                                        ${answers[q.id] === true 
+                                                            ? 'bg-blue-600 text-white shadow-inner' 
+                                                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                                                >
+                                                    <Icons.CheckCircle size={18} /> 네
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleAnswer(q.id, false)}
+                                                    className={`py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2
+                                                        ${answers[q.id] === false 
+                                                            ? 'bg-slate-600 text-white shadow-inner' 
+                                                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                                                >
+                                                    <Icons.XCircle size={18} /> 아니요
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* STEP 3: Results */}
+                            {step === 'result' && (
+                                <div className="animate-fadeIn">
+                                    {/* View Toggle */}
+                                    <div className="flex bg-slate-200 p-1 rounded-lg mb-6">
+                                        <button
+                                            onClick={() => setViewMode('patient')}
+                                            className={`flex-1 py-2 text-sm font-bold rounded-md flex items-center justify-center gap-2 transition ${viewMode === 'patient' ? 'bg-white text-blue-600 shadow' : 'text-slate-500'}`}
+                                        >
+                                            <Icons.User size={16} /> 환자용 결과
+                                        </button>
+                                        <button
+                                            onClick={() => setViewMode('doctor')}
+                                            className={`flex-1 py-2 text-sm font-bold rounded-md flex items-center justify-center gap-2 transition ${viewMode === 'doctor' ? 'bg-slate-800 text-white shadow' : 'text-slate-500'}`}
+                                        >
+                                            <Icons.UserCheck size={16} /> 의료진용 상세
+                                        </button>
+                                    </div>
+
+                                    {/* Patient View */}
+                                    {viewMode === 'patient' && (
+                                        <div className="text-center space-y-6">
+                                            <div className={`
+                                                p-8 rounded-3xl flex flex-col items-center justify-center space-y-4 shadow-lg border-4
+                                                ${result.status === 'safe' ? 'bg-green-50 border-green-100' : ''}
+                                                ${result.status === 'caution' ? 'bg-yellow-50 border-yellow-100' : ''}
+                                                ${result.status === 'danger' ? 'bg-red-50 border-red-100' : ''}
+                                            `}>
+                                                {result.status === 'safe' && <Icons.CheckCircle className="w-24 h-24 text-green-500" />}
+                                                {result.status === 'caution' && <Icons.AlertTriangle className="w-24 h-24 text-yellow-500" />}
+                                                {result.status === 'danger' && <Icons.ShieldAlert className="w-24 h-24 text-red-500" />}
+                                                
+                                                <h2 className="text-2xl font-bold">
+                                                    {result.status === 'safe' ? '진료 가능' : 
+                                                    result.status === 'caution' ? '상담 필요' : '주의 요망'}
+                                                </h2>
+                                                <p className="text-slate-600 font-medium whitespace-pre-line leading-relaxed">
+                                                    {result.patientMessage}
+                                                </p>
+                                            </div>
+
+                                            <div className="bg-white p-5 rounded-xl shadow-sm border text-left">
+                                                <h3 className="font-bold text-slate-700 mb-3 flex items-center gap-2">
+                                                    <Icons.FileText size={18} /> 내가 체크한 항목
+                                                </h3>
+                                                <ul className="space-y-2">
+                                                    {Object.keys(answers).filter(k => answers[k]).length === 0 ? (
+                                                        <li className="text-slate-400 text-sm">특이사항 없음</li>
+                                                    ) : (
+                                                        QUESTIONS.filter(q => answers[q.id]).map(q => (
+                                                            <li key={q.id} className="text-sm bg-slate-50 p-2 rounded text-slate-700 border border-slate-100">
+                                                                • {q.text}
+                                                            </li>
+                                                        ))
+                                                    )}
+                                                </ul>
+                                            </div>
+                                            <p className="text-xs text-slate-400 mt-8">
+                                                * 이 결과는 참고용이며, 정확한 진단은 치과 의사 선생님과 상담하세요.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Doctor View */}
+                                    {viewMode === 'doctor' && (
+                                        <div className="space-y-4">
+                                            <div className="bg-slate-800 text-white p-4 rounded-xl shadow-lg">
+                                                <h3 className="font-bold text-lg flex items-center gap-2 mb-2">
+                                                    <Icons.Stethoscope size={20} /> Clinical Summary
+                                                </h3>
+                                                <div className="flex items-center gap-3 text-sm">
+                                                    <span className={`px-2 py-1 rounded font-bold uppercase ${
+                                                        result.status === 'safe' ? 'bg-green-500' : 
+                                                        result.status === 'caution' ? 'bg-yellow-500 text-black' : 'bg-red-500'
+                                                    }`}>
+                                                        {result.status}
+                                                    </span>
+                                                    <span>
+                                                        Risk Factors: {result.doctorNotes.length}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {result.doctorNotes.length === 0 ? (
+                                                <div className="text-center py-10 bg-white rounded-xl border border-dashed border-slate-300">
+                                                    <Icons.CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-3" />
+                                                    <p className="text-slate-500 font-medium">No Specific Contraindications</p>
+                                                    <p className="text-xs text-slate-400">일반적인 프로토콜에 따라 진료 가능합니다.</p>
+                                                </div>
+                                            ) : (
+                                                result.doctorNotes.map((note, index) => (
+                                                    <div key={index} className={`
+                                                        border-l-4 rounded-r-xl p-4 shadow-sm bg-white
+                                                        ${note.type === 'monitor' ? 'border-blue-500' : ''}
+                                                        ${note.type === 'warning' ? 'border-yellow-500' : ''}
+                                                        ${note.type === 'danger' ? 'border-orange-500' : ''}
+                                                        ${note.type === 'critical' ? 'border-red-600 bg-red-50' : ''}
+                                                    `}>
+                                                        <h4 className={`font-bold text-sm mb-1 flex items-center gap-2
+                                                            ${note.type === 'critical' ? 'text-red-700' : 'text-slate-800'}
+                                                        `}>
+                                                            {note.type === 'critical' && <Icons.AlertTriangle size={16} />}
+                                                            {note.title}
+                                                        </h4>
+                                                        <p className="text-sm text-slate-600 leading-relaxed">
+                                                            {note.content}
+                                                        </p>
+                                                    </div>
+                                                ))
+                                            )}
+                                            
+                                            <div className="mt-6 p-4 bg-slate-100 rounded-lg text-xs text-slate-500">
+                                                <h5 className="font-bold mb-1">Disclaimer</h5>
+                                                본 결과는 스크리닝 보조 도구입니다. 최종적인 치료 결정과 투약에 대한 책임은 담당 치과의사에게 있습니다. 전신질환이 복합적인 경우 반드시 주치의(내과 등)와 Consult를 진행하십시오.
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                        </main>
+
+                        {/* Footer / Floating Button */}
+                        {step === 'survey' && (
+                            <div className="p-4 bg-white border-t">
+                                <button 
+                                    onClick={handleNext}
+                                    disabled={!allAnswered} 
+                                    className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition
+                                        ${allAnswered 
+                                            ? 'bg-blue-600 text-white hover:bg-blue-700 transform active:scale-95' 
+                                            : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
+                                >
+                                    결과 확인하기 <Icons.ChevronRight />
+                                </button>
+                                {!allAnswered && (
+                                    <p className="text-xs text-center text-slate-400 mt-2">모든 항목에 답변해주세요.</p>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<DentalScreeningApp />);
+    </script>
+</body>
+</html>
