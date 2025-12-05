@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dental Safe Check</title>
+    <title>Dental Safe Check - 전신질환 정밀 체크</title>
     
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -28,6 +28,12 @@
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+        /* Number Input Arrows Removal */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
         }
     </style>
 </head>
@@ -69,7 +75,9 @@
             RefreshCcw: (props) => <Icon {...props}><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></Icon>,
             HeartPulse: (props) => <Icon {...props}><path d="M19 14c1.49-1.28 3.6-2.34 4.58-2.74a.45.45 0 0 0 .19-.57 2.37 2.37 0 0 0-2.2-1.74c-.9 0-1.74.45-2.2 1.17l-.37.56a.46.46 0 0 1-.77 0l-2.07-3.1a.48.48 0 0 0-.79-.01l-1.37 1.95a.48.48 0 0 1-.77.02l-1.31-1.8a.48.48 0 0 0-.78-.01L4.85 15.3a.48.48 0 0 1-.84-.14L2.8 11.7a.48.48 0 0 0-.85-.09l-1.72 2.45a.45.45 0 0 0 .09.6c1.02.8 3.1 2.1 4.58 2.74a4.34 4.34 0 0 0 3.73-.25L12 15l2.45 1.55a4.34 4.34 0 0 0 3.72.25c.5-.22 1.42-.58 2.23-1.07l.2-.13"/></Icon>,
             Pill: (props) => <Icon {...props}><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><line x1="8.5" y1="8.5" x2="15.5" y2="15.5"/></Icon>,
-            Syringe: (props) => <Icon {...props}><path d="m18 2 4 4"/><path d="m17 7 3-3"/><path d="M19 9 8.7 19.3c-1 1-2.5 1-3.4 0l-.6-.6c-1-1-1-2.5 0-3.4L15 5"/><path d="m9 11 4 4"/><path d="m5 19-3 3"/></Icon>
+            Syringe: (props) => <Icon {...props}><path d="m18 2 4 4"/><path d="m17 7 3-3"/><path d="M19 9 8.7 19.3c-1 1-2.5 1-3.4 0l-.6-.6c-1-1-1-2.5 0-3.4L15 5"/><path d="m9 11 4 4"/><path d="m5 19-3 3"/></Icon>,
+            Droplet: (props) => <Icon {...props}><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></Icon>,
+            Biohazard: (props) => <Icon {...props}><circle cx="12" cy="12" r="10" /><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" stroke="none" /><path d="M8 12h8"/><path d="M12 8v8"/></Icon> 
         };
 
         // --- Data & Logic ---
@@ -79,25 +87,39 @@
                 id: 'hypertension',
                 category: 'cardio',
                 text: '현재 고혈압 진단을 받았거나 혈압약을 복용 중이신가요?',
-                detail: '혈압이 조절되지 않거나(수축기 160 이상), 최근 약을 변경하셨나요?'
+                detail: '진단 받은 적이 없더라도 혈압이 높다고 느끼시면 체크해주세요.',
+                hasInputs: true
             },
             {
                 id: 'diabetes',
                 category: 'endocrine',
                 text: '당뇨병이 있거나 인슐린/당뇨약을 사용 중이신가요?',
-                detail: '최근 당화혈색소(HbA1c) 수치를 모르거나, 저혈당 쇼크 경험이 있나요?'
+                detail: '당뇨가 의심되거나 최근 혈당 수치 확인이 필요하시면 체크해주세요.',
+                hasInputs: true
             },
             {
                 id: 'anticoagulant',
                 category: 'medication',
-                text: '피를 묽게 하는 약(아스피린, 와파린, 항혈전제 등)을 드시나요?',
+                text: '피를 묽게 하는 약(아스피린, 와파린 등)을 드시나요?',
                 detail: '심혈관 질환, 뇌졸중 예방 목적으로 복용 중입니다.'
+            },
+            {
+                id: 'bleeding_tendency',
+                category: 'medication',
+                text: '상처가 났을 때 피가 잘 멎지 않거나, 멍이 쉽게 드나요?',
+                detail: '과거 발치나 수술 후 지혈이 어려웠던 경험이 있다면 체크해주세요.'
             },
             {
                 id: 'osteoporosis',
                 category: 'medication',
                 text: '골다공증 약을 드시거나 주사를 맞으신 적이 있나요?',
                 detail: '비스포스포네이트 계열 약물 복용 혹은 주사 치료 경험.'
+            },
+            {
+                id: 'infectious',
+                category: 'other',
+                text: 'B형/C형 간염, 결핵 등 전염성 질환을 앓고 계신가요?',
+                detail: '의료진의 감염 예방과 안전한 기구 사용을 위해 꼭 알려주세요.'
             },
             {
                 id: 'endocarditis',
@@ -128,20 +150,71 @@
             // 1. Hypertension
             if (answers.hypertension) {
                 riskLevel += 1;
+                const sys = parseInt(answers.bp_sys);
+                const dia = parseInt(answers.bp_dia);
+                
+                let bpNote = '진료 전 혈압 재확인 필수.';
+                let bpStatus = 'monitor'; 
+
+                if (sys || dia) {
+                    bpNote = `환자 자가 측정 혈압: ${sys || '?'} / ${dia || '?'} mmHg. `;
+                    if (sys >= 160 || dia >= 100) {
+                        bpStatus = 'danger';
+                        status = 'danger';
+                        bpNote += 'Stage 2 고혈압. 응급 치과 처치 외 당일 Elective treatment 연기 강력 권고. 내과 의뢰 요망.';
+                        patientMessage = '현재 혈압이 상당히 높습니다. 안전을 위해 오늘 치료는 미루거나 응급 처치만 가능할 수 있습니다.';
+                    } else if (sys >= 140 || dia >= 90) {
+                        bpStatus = 'warning';
+                        if (status !== 'danger') status = 'caution';
+                        bpNote += 'Stage 1 고혈압. 치료 중 모니터링 필수. Stress reduction protocol.';
+                    } else {
+                        bpNote += 'Controlled. 통상적 진료 가능.';
+                    }
+                } else {
+                    bpNote += ' 160/100mmHg 이상 시 치료 연기 고려. Epinephrine 2 ample 이하 사용.';
+                }
+
                 doctorNotes.push({
-                    type: 'monitor',
+                    type: bpStatus,
                     title: '고혈압 (Hypertension)',
-                    content: '진료 전 혈압 측정 필수. 160/100mmHg 이상 시 응급 처치 외 elective treatment 연기 고려. Epinephrine 함유 국소마취제 사용 시 주의(2 ample 이하 권장). 리도카인 사용 시 Aspiration 철저.'
+                    content: bpNote
                 });
             }
 
             // 2. Diabetes
             if (answers.diabetes) {
                 riskLevel += 1;
+                const bsl = parseInt(answers.bs_level);
+                const isHighSugar = answers.bs_high_symptom;
+                const isLowSugar = answers.bs_low_symptom;
+
+                let dmNote = '저혈당 쇼크 주의. 아침 식사 확인.';
+                let dmStatus = 'monitor';
+
+                if (bsl || isHighSugar || isLowSugar) {
+                    if (bsl) dmNote = `환자 자가 측정 혈당: ${bsl} mg/dL. `;
+                    else dmNote = '';
+
+                    if ((bsl >= 200) || isHighSugar) {
+                        dmStatus = 'warning';
+                        if (status !== 'danger') status = 'caution';
+                        dmNote += '고혈당(>200). 감염 취약. 관혈적 술식 후 항생제/치유 지연 설명.';
+                    }
+                    else if ((bsl > 0 && bsl < 70) || isLowSugar) {
+                        dmStatus = 'danger';
+                        status = 'danger';
+                        dmNote += '저혈당(<70) 위험. Glucose 공급 후 안정 시까지 진료 보류.';
+                        patientMessage = '저혈당 증상/수치가 확인됩니다. 쇼크 예방을 위해 당분 섭취가 필요하며 치료가 지연될 수 있습니다.';
+                    } 
+                    else if (bsl) {
+                        dmNote += 'Controlled. 통상 진료 가능.';
+                    }
+                }
+
                 doctorNotes.push({
-                    type: 'monitor',
+                    type: dmStatus,
                     title: '당뇨 (Diabetes)',
-                    content: '아침 식사 및 약 복용 여부 확인. 저혈당 쇼크 대비(오렌지 주스 등 구비). HbA1c > 8% 혹은 공복혈당 > 200mg/dL 시 감염 위험 증가로 인한 항생제 처방 및 외과적 시술 주의.'
+                    content: dmNote
                 });
             }
 
@@ -151,52 +224,75 @@
                 patientMessage = '드시는 약으로 인해 지혈이 늦어질 수 있습니다. 의료진과 상담이 필요합니다.';
                 doctorNotes.push({
                     type: 'warning',
-                    title: '항혈전제/항응고제 복용 (Anticoagulants)',
-                    content: '단순 발치나 치주 치료 시 약물 중단 불필요(일반적 가이드라인). 와파린 복용 시 최근 INR 수치 확인(3.0 미만 시 시술 가능). 광범위 수술 시 내과 협진(Consult) 후 3-5일 중단 혹은 헤파린 브릿지 고려. 국소 지혈제(Surgicel, Gelfoam) 및 봉합 준비.'
+                    title: '항혈전제/항응고제 복용',
+                    content: '발치/치주치료 시 중단 불필요(일반적). 와파린 INR 확인. 광범위 수술 시 협진 및 지혈제(Surgicel 등) 준비.'
                 });
             }
 
-            // 4. Osteoporosis
+            // 4. Bleeding Tendency (NEW)
+            if (answers.bleeding_tendency) {
+                status = 'danger';
+                patientMessage = '지혈이 잘 되지 않는 증상은 치과 치료 시 매우 위험할 수 있어 정밀 검사가 필요합니다.';
+                doctorNotes.push({
+                    type: 'critical',
+                    title: '출혈 소인 (Bleeding Diathesis)',
+                    content: '과거 지혈 지연 병력/멍. 혈소판 감소증, 혈우병, 간 질환 등 감별 필요. 1차 의료기관 단독 시술 위험. 혈액검사(CBC, PT/aPTT) 결과 확인 전까지 침습적 치료 금기.'
+                });
+            }
+
+            // 5. Osteoporosis
             if (answers.osteoporosis) {
                 status = status === 'danger' ? 'danger' : 'caution';
                 patientMessage = '골다공증 약물 복용 기간에 따라 발치 등 치료에 주의가 필요합니다.';
                 doctorNotes.push({
                     type: 'danger',
-                    title: '골다공증 약물 (Bisphosphonates/MRONJ Risk)',
-                    content: '복용 기간 및 제형(경구/주사) 확인 필수. 3년 이상 복용 혹은 스테로이드 병용 시 MRONJ 고위험군. 임플란트/발치 시 휴약기(Drug Holiday) 필요 여부 내과 협진 권장. 가능한 보존적 치료 우선.'
+                    title: '골다공증 약물 (MRONJ Risk)',
+                    content: '약물 제형(주사/경구) 및 기간 확인. 3년 이상 복용 시 고위험군. 발치 시 휴약기(Drug Holiday) 협진.'
                 });
             }
 
-            // 5. Endocarditis
+            // 6. Infectious Diseases (NEW)
+            if (answers.infectious) {
+                riskLevel += 1;
+                // 감염성 질환 자체는 당장 치료 불가능은 아니나 주의 필요
+                if (status === 'safe') status = 'caution'; 
+                doctorNotes.push({
+                    type: 'warning',
+                    title: '감염성 질환 (Infectious Diseases)',
+                    content: 'Standard Precaution 준수 필수. 활동성 결핵(TB) 의심 시 응급 외 진료 연기 및 격리. 간염(HBV, HCV) 보균자 시 간 기능 저하 및 지혈 지연 가능성 확인.'
+                });
+            }
+
+            // 7. Endocarditis
             if (answers.endocarditis) {
                 status = 'danger';
                 patientMessage = '심장 보호를 위해 치료 전 예방적 항생제 복용이 필요할 수 있습니다.';
                 doctorNotes.push({
                     type: 'critical',
-                    title: '감염성 심내막염 고위험군 (IE Prophylaxis)',
-                    content: '출혈이 동반되는 치과 시술 전 예방적 항생제 투여 필수. (성인: Amoxicillin 2g 시술 1시간 전 경구 투여. 페니실린 알러지 시 Clindamycin 600mg 등 대체).'
+                    title: '감염성 심내막염 고위험군',
+                    content: '출혈 동반 시술 전 예방적 항생제(Amoxicillin 2g) 투여 필수. 알러지 시 Clindamycin 600mg 대체.'
                 });
             }
 
-            // 6. Kidney/Liver
+            // 8. Kidney/Liver
             if (answers.kidney_liver) {
                 status = 'danger';
                 patientMessage = '전신 상태에 따라 약물 처방 및 치료 계획 조정이 필요합니다.';
                 doctorNotes.push({
                     type: 'warning',
-                    title: '신장/간 기능 저하 (Renal/Hepatic Impairment)',
-                    content: 'NSAIDs, 항생제 등 대사 경로 확인 후 용량 조절 혹은 금기 약물 확인. 투석 환자의 경우 투석 다음 날 치료 권장(헤파린 반감기 고려). 출혈 경향 확인.'
+                    title: '신장/간 기능 저하',
+                    content: '약물 대사 고려 용량 조절. 투석 환자는 투석 다음 날 진료(헤파린 반감기). 지혈 확인.'
                 });
             }
 
-            // 7. Pregnancy
+            // 9. Pregnancy
             if (answers.pregnancy) {
                 status = 'caution';
-                patientMessage = '임신 시기(초기/중기/말기)에 따라 치료 가능 여부가 달라집니다.';
+                patientMessage = '임신 시기에 따라 치료 가능 여부가 달라집니다.';
                 doctorNotes.push({
                     type: 'monitor',
                     title: '임신부 (Pregnancy)',
-                    content: '2기(14~20주)가 가장 안전한 치료 시기. 방사선 촬영 시 납복 필수. NSAIDs 및 테트라사이클린 계열 금기. Acetaminophen 사용 권장. Unit Chair 등받이 조절(저혈압 방지).'
+                    content: '2기(14~20주) 안전. 방사선 납복 필수. NSAIDs/Tetracycline 금기.'
                 });
             }
 
@@ -204,9 +300,9 @@
             if (status === 'safe' && riskLevel > 0) status = 'caution';
 
             // Message Adjustment
-            if (status === 'caution') {
-                patientMessage = '의료진 상담 후 안전하게 치료를 진행할 수 있습니다. 복용 중인 약 처방전을 보여주세요.';
-            } else if (status === 'danger') {
+            if (status === 'caution' && !patientMessage.includes('지혈') && !patientMessage.includes('골다공증')) {
+                patientMessage = '의료진 상담 후 안전하게 치료를 진행할 수 있습니다.';
+            } else if (status === 'danger' && !patientMessage.includes('저혈당') && !patientMessage.includes('혈압') && !patientMessage.includes('지혈')) {
                 patientMessage = '안전을 위해 내과 전문의 소견이 필요하거나, 오늘 치료가 미루어질 수 있습니다.';
             }
 
@@ -216,12 +312,30 @@
         // --- Main Component ---
 
         function DentalScreeningApp() {
-            const [step, setStep] = useState('intro'); // intro, survey, result
+            const [step, setStep] = useState('intro');
             const [answers, setAnswers] = useState({});
-            const [viewMode, setViewMode] = useState('patient'); // patient, doctor
+            const [viewMode, setViewMode] = useState('patient');
 
             const handleAnswer = (id, value) => {
-                setAnswers(prev => ({ ...prev, [id]: value }));
+                setAnswers(prev => {
+                    const next = { ...prev, [id]: value };
+                    if (!value) {
+                        if (id === 'hypertension') {
+                            delete next.bp_sys;
+                            delete next.bp_dia;
+                        }
+                        if (id === 'diabetes') {
+                            delete next.bs_level;
+                            delete next.bs_high_symptom;
+                            delete next.bs_low_symptom;
+                        }
+                    }
+                    return next;
+                });
+            };
+
+            const handleValueChange = (key, value) => {
+                setAnswers(prev => ({ ...prev, [key]: value }));
             };
 
             const handleNext = () => {
@@ -235,7 +349,6 @@
             };
 
             const result = useMemo(() => analyzeCondition(answers), [answers]);
-            
             const allAnswered = QUESTIONS.every(q => answers[q.id] !== undefined);
 
             return (
@@ -291,9 +404,11 @@
                                         <div key={q.id} className="bg-white border rounded-xl p-5 shadow-sm hover:shadow-md transition">
                                             <div className="flex items-start gap-3 mb-3">
                                                 {q.category === 'cardio' && <Icons.HeartPulse className="text-red-500 mt-1 shrink-0" />}
-                                                {q.category === 'medication' && <Icons.Pill className="text-green-500 mt-1 shrink-0" />}
+                                                {q.category === 'medication' && !q.id.includes('bleeding') && <Icons.Pill className="text-green-500 mt-1 shrink-0" />}
+                                                {q.id === 'bleeding_tendency' && <Icons.Droplet className="text-red-600 mt-1 shrink-0" />}
+                                                {q.id === 'infectious' && <Icons.Biohazard className="text-orange-600 mt-1 shrink-0" />}
                                                 {q.category === 'endocrine' && <Icons.Activity className="text-orange-500 mt-1 shrink-0" />}
-                                                {(q.category === 'organ' || q.category === 'other') && <Icons.Syringe className="text-purple-500 mt-1 shrink-0" />}
+                                                {(q.category === 'organ' || q.category === 'other') && q.id !== 'infectious' && <Icons.Syringe className="text-purple-500 mt-1 shrink-0" />}
                                                 
                                                 <div>
                                                     <h3 className="font-bold text-lg leading-tight">{q.text}</h3>
@@ -306,7 +421,7 @@
                                                     onClick={() => handleAnswer(q.id, true)}
                                                     className={`py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2
                                                         ${answers[q.id] === true 
-                                                            ? 'bg-blue-600 text-white shadow-inner' 
+                                                            ? 'bg-blue-600 text-white shadow-inner ring-2 ring-blue-600 ring-offset-2' 
                                                             : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
                                                 >
                                                     <Icons.CheckCircle size={18} /> 네
@@ -315,12 +430,81 @@
                                                     onClick={() => handleAnswer(q.id, false)}
                                                     className={`py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2
                                                         ${answers[q.id] === false 
-                                                            ? 'bg-slate-600 text-white shadow-inner' 
+                                                            ? 'bg-slate-600 text-white shadow-inner ring-2 ring-slate-600 ring-offset-2' 
                                                             : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
                                                 >
                                                     <Icons.XCircle size={18} /> 아니요
                                                 </button>
                                             </div>
+
+                                            {/* Sub Input: Hypertension */}
+                                            {q.id === 'hypertension' && answers[q.id] === true && (
+                                                <div className="mt-4 pt-4 border-t border-dashed border-slate-200 animate-fadeIn">
+                                                    <p className="text-sm font-bold text-blue-800 mb-2">🩸 현재 혈압을 아시나요?</p>
+                                                    <p className="text-xs text-slate-500 mb-3">병원 내 혈압계로 측정 후 입력해주시면 정확한 판단에 도움이 됩니다.</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex-1">
+                                                            <label className="text-xs font-semibold text-slate-500 block mb-1">수축기 (최고)</label>
+                                                            <input 
+                                                                type="number" 
+                                                                placeholder="120"
+                                                                value={answers.bp_sys || ''}
+                                                                onChange={(e) => handleValueChange('bp_sys', e.target.value)}
+                                                                className="w-full p-2 border border-slate-300 rounded text-center text-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                                            />
+                                                        </div>
+                                                        <span className="text-slate-300 text-2xl mt-4">/</span>
+                                                        <div className="flex-1">
+                                                            <label className="text-xs font-semibold text-slate-500 block mb-1">이완기 (최저)</label>
+                                                            <input 
+                                                                type="number" 
+                                                                placeholder="80"
+                                                                value={answers.bp_dia || ''}
+                                                                onChange={(e) => handleValueChange('bp_dia', e.target.value)}
+                                                                className="w-full p-2 border border-slate-300 rounded text-center text-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Sub Input: Diabetes */}
+                                            {q.id === 'diabetes' && answers[q.id] === true && (
+                                                <div className="mt-4 pt-4 border-t border-dashed border-slate-200 animate-fadeIn">
+                                                    <p className="text-sm font-bold text-orange-800 mb-2">🍬 현재 혈당 상태 체크</p>
+                                                    <div className="mb-4">
+                                                        <label className="text-xs font-semibold text-slate-500 block mb-1">현재 혈당 수치 (측정 가능 시)</label>
+                                                        <div className="relative">
+                                                            <input 
+                                                                type="number" 
+                                                                placeholder="예: 120"
+                                                                value={answers.bs_level || ''}
+                                                                onChange={(e) => handleValueChange('bs_level', e.target.value)}
+                                                                className="w-full p-2 pl-4 pr-12 border border-slate-300 rounded text-lg focus:ring-2 focus:ring-orange-500 outline-none"
+                                                            />
+                                                            <span className="absolute right-4 top-3 text-slate-400 text-sm">mg/dL</span>
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-xs font-semibold text-slate-500 mb-2">또는 현재 증상이 있으신가요?</p>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <button 
+                                                            onClick={() => handleValueChange('bs_high_symptom', !answers.bs_high_symptom)}
+                                                            className={`p-2 rounded border text-sm transition
+                                                                ${answers.bs_high_symptom ? 'bg-orange-100 border-orange-500 text-orange-700 font-bold' : 'bg-white border-slate-200 text-slate-600'}`}
+                                                        >
+                                                            고혈당 증상<br/><span className="text-xs font-normal opacity-75">(심한 갈증, 피로)</span>
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => handleValueChange('bs_low_symptom', !answers.bs_low_symptom)}
+                                                            className={`p-2 rounded border text-sm transition
+                                                                ${answers.bs_low_symptom ? 'bg-red-100 border-red-500 text-red-700 font-bold' : 'bg-white border-slate-200 text-slate-600'}`}
+                                                        >
+                                                            저혈당 증상<br/><span className="text-xs font-normal opacity-75">(식은땀, 떨림)</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+
                                         </div>
                                     ))}
                                 </div>
@@ -372,12 +556,24 @@
                                                     <Icons.FileText size={18} /> 내가 체크한 항목
                                                 </h3>
                                                 <ul className="space-y-2">
-                                                    {Object.keys(answers).filter(k => answers[k]).length === 0 ? (
+                                                    {Object.keys(answers).filter(k => answers[k] === true).length === 0 ? (
                                                         <li className="text-slate-400 text-sm">특이사항 없음</li>
                                                     ) : (
                                                         QUESTIONS.filter(q => answers[q.id]).map(q => (
                                                             <li key={q.id} className="text-sm bg-slate-50 p-2 rounded text-slate-700 border border-slate-100">
-                                                                • {q.text}
+                                                                <span className="font-bold text-blue-600">• {q.text.split('?')[0]}</span>
+                                                                {q.id === 'hypertension' && (answers.bp_sys || answers.bp_dia) && (
+                                                                    <span className="block text-xs text-slate-500 mt-1 ml-3">
+                                                                        └ 입력 혈압: {answers.bp_sys || '?'} / {answers.bp_dia || '?'} mmHg
+                                                                    </span>
+                                                                )}
+                                                                {q.id === 'diabetes' && (answers.bs_level || answers.bs_high_symptom || answers.bs_low_symptom) && (
+                                                                    <span className="block text-xs text-slate-500 mt-1 ml-3">
+                                                                        └ {answers.bs_level ? `혈당: ${answers.bs_level}mg/dL` : ''} 
+                                                                        {answers.bs_high_symptom ? ' [고혈당 증상]' : ''} 
+                                                                        {answers.bs_low_symptom ? ' [저혈당 증상]' : ''}
+                                                                    </span>
+                                                                )}
                                                             </li>
                                                         ))
                                                     )}
