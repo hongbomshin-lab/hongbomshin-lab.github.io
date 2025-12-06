@@ -35,6 +35,49 @@
             -webkit-appearance: none; 
             margin: 0; 
         }
+
+        /* --- Print Specific Styles --- */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background-color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            /* Reset container constraints for full page print */
+            .w-full.max-w-md {
+                max-width: 100% !important;
+                width: 100% !important;
+                box-shadow: none !important;
+                min-height: auto !important;
+            }
+            /* Expand scrollable areas */
+            main {
+                overflow: visible !important;
+                height: auto !important;
+                padding: 0 !important;
+            }
+            /* Remove shadows and borders for cleaner print */
+            .shadow-xl, .shadow-lg, .shadow-md, .shadow-sm {
+                box-shadow: none !important;
+            }
+            /* Ensure text contrast */
+            p, h1, h2, h3, h4, h5, h6, li, span {
+                color: black !important;
+            }
+            /* Force specific background colors if needed (for status boxes) */
+            .bg-green-50 { background-color: #f0fdf4 !important; }
+            .bg-yellow-50 { background-color: #fefce8 !important; }
+            .bg-red-50 { background-color: #fef2f2 !important; }
+            .bg-slate-800 { background-color: #1e293b !important; color: white !important; }
+            
+            /* Hide URL header/footer if browser allows (optional trick) */
+            @page {
+                margin: 1cm;
+            }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
@@ -77,7 +120,8 @@
             Pill: (props) => <Icon {...props}><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><line x1="8.5" y1="8.5" x2="15.5" y2="15.5"/></Icon>,
             Syringe: (props) => <Icon {...props}><path d="m18 2 4 4"/><path d="m17 7 3-3"/><path d="M19 9 8.7 19.3c-1 1-2.5 1-3.4 0l-.6-.6c-1-1-1-2.5 0-3.4L15 5"/><path d="m9 11 4 4"/><path d="m5 19-3 3"/></Icon>,
             Droplet: (props) => <Icon {...props}><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></Icon>,
-            Biohazard: (props) => <Icon {...props}><circle cx="12" cy="12" r="10" /><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" stroke="none" /><path d="M8 12h8"/><path d="M12 8v8"/></Icon> 
+            Biohazard: (props) => <Icon {...props}><circle cx="12" cy="12" r="10" /><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" stroke="none" /><path d="M8 12h8"/><path d="M12 8v8"/></Icon>,
+            Printer: (props) => <Icon {...props}><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></Icon>
         };
 
         // --- Data & Logic ---
@@ -348,6 +392,10 @@
                 setViewMode('patient');
             };
 
+            const handlePrint = () => {
+                window.print();
+            };
+
             const result = useMemo(() => analyzeCondition(answers), [answers]);
             const allAnswered = QUESTIONS.every(q => answers[q.id] !== undefined);
 
@@ -361,11 +409,18 @@
                                 <Icons.Stethoscope className="h-6 w-6" />
                                 <h1 className="text-lg font-bold">Dental Safe Check</h1>
                             </div>
-                            {step === 'result' && (
-                                <button onClick={resetApp} className="text-sm bg-blue-700 px-3 py-1 rounded-full flex items-center gap-1 hover:bg-blue-800 transition">
-                                    <Icons.RefreshCcw size={14} /> 처음으로
-                                </button>
-                            )}
+                            <div className="flex gap-2 no-print">
+                                {step === 'result' && (
+                                    <>
+                                        <button onClick={handlePrint} className="text-sm bg-blue-700 px-3 py-1 rounded-full flex items-center gap-1 hover:bg-blue-800 transition">
+                                            <Icons.Printer size={14} /> 인쇄
+                                        </button>
+                                        <button onClick={resetApp} className="text-sm bg-blue-700 px-3 py-1 rounded-full flex items-center gap-1 hover:bg-blue-800 transition">
+                                            <Icons.RefreshCcw size={14} /> 처음으로
+                                        </button>
+                                    </>
+                                )}
+                            </div>
                         </header>
 
                         {/* Main Content Area */}
@@ -513,8 +568,8 @@
                             {/* STEP 3: Results */}
                             {step === 'result' && (
                                 <div className="animate-fadeIn">
-                                    {/* View Toggle */}
-                                    <div className="flex bg-slate-200 p-1 rounded-lg mb-6">
+                                    {/* View Toggle - Hidden when printing */}
+                                    <div className="flex bg-slate-200 p-1 rounded-lg mb-6 no-print">
                                         <button
                                             onClick={() => setViewMode('patient')}
                                             className={`flex-1 py-2 text-sm font-bold rounded-md flex items-center justify-center gap-2 transition ${viewMode === 'patient' ? 'bg-white text-blue-600 shadow' : 'text-slate-500'}`}
@@ -646,7 +701,7 @@
 
                         {/* Footer / Floating Button */}
                         {step === 'survey' && (
-                            <div className="p-4 bg-white border-t">
+                            <div className="p-4 bg-white border-t no-print">
                                 <button 
                                     onClick={handleNext}
                                     disabled={!allAnswered} 
