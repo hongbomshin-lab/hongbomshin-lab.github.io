@@ -37,19 +37,23 @@
 
         @media print {
             .no-print { display: none !important; }
-            body { background-color: white !important; -webkit-print-color-adjust: exact; }
+            body { background-color: white !important; -webkit-print-color-adjust: exact; color: black !important; }
             .w-full.max-w-md { max-width: 100% !important; width: 100% !important; box-shadow: none !important; min-height: auto !important; }
             main { overflow: visible !important; height: auto !important; padding: 0 !important; }
             .shadow-xl, .shadow-lg, .shadow-md, .shadow-sm { box-shadow: none !important; }
-            .bg-green-50 { background-color: #f0fdf4 !important; }
-            .bg-yellow-50 { background-color: #fefce8 !important; }
-            .bg-red-50 { background-color: #fef2f2 !important; }
-            .bg-slate-800 { background-color: #1e293b !important; color: white !important; }
-            .print-only { display: block !important; }
-            @page { margin: 1cm; }
+            /* Reset specific status colors for clean print, keep text readable */
+            .bg-green-50, .bg-yellow-50, .bg-red-50, .bg-slate-800, .bg-blue-50, .bg-sky-50 { background-color: white !important; border: 1px solid #ddd !important; }
+            .text-white { color: black !important; }
+            .text-slate-500, .text-slate-600, .text-slate-700 { color: black !important; }
+            
+            /* Print Specifics */
+            .print-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+            .print-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 10pt; }
+            .print-table th, .print-table td { border: 1px solid #000; padding: 4px 8px; text-align: left; }
+            .print-table th { background-color: #f0f0f0 !important; font-weight: bold; width: 30%; }
+            
+            @page { margin: 1.5cm; size: A4; }
         }
-        
-        .print-only { display: none; }
 
         .loader {
             border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #3b82f6;
@@ -80,6 +84,7 @@
             User: (p) => <Icon {...p}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></Icon>,
             UserCheck: (p) => <Icon {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></Icon>,
             ChevronRight: (p) => <Icon {...p}><polyline points="9 18 15 12 9 6"/></Icon>,
+            ChevronLeft: (p) => <Icon {...p}><polyline points="15 18 9 12 15 6"/></Icon>,
             RefreshCcw: (p) => <Icon {...p}><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></Icon>,
             HeartPulse: (p) => <Icon {...p}><path d="M19 14c1.49-1.28 3.6-2.34 4.58-2.74a.45.45 0 0 0 .19-.57 2.37 2.37 0 0 0-2.2-1.74c-.9 0-1.74.45-2.2 1.17l-.37.56a.46.46 0 0 1-.77 0l-2.07-3.1a.48.48 0 0 0-.79-.01l-1.37 1.95a.48.48 0 0 1-.77.02l-1.31-1.8a.48.48 0 0 0-.78-.01L4.85 15.3a.48.48 0 0 1-.84-.14L2.8 11.7a.48.48 0 0 0-.85-.09l-1.72 2.45a.45.45 0 0 0 .09.6c1.02.8 3.1 2.1 4.58 2.74a4.34 4.34 0 0 0 3.73-.25L12 15l2.45 1.55a4.34 4.34 0 0 0 3.72.25c.5-.22 1.42-.58 2.23-1.07l.2-.13"/></Icon>,
             Pill: (p) => <Icon {...p}><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><line x1="8.5" y1="8.5" x2="15.5" y2="15.5"/></Icon>,
@@ -101,6 +106,7 @@
                 title: "치과 치료 전 안전 점검",
                 subtitle: "안전한 진료를 위해 환자분의 전신 건강 상태를 체크합니다.",
                 startBtn: "자가진단 시작하기",
+                btn_back: "이전",
                 basicInfoTitle: "기본 정보 입력",
                 basicInfoDesc: "성별, 나이, 몸무게를 입력해주세요.",
                 label_gender: "성별", gender_male: "남성", gender_female: "여성",
@@ -149,6 +155,7 @@
                 title: "Pre-treatment Dental Safety Check",
                 subtitle: "We check your general health for safe treatment.",
                 startBtn: "Start Assessment",
+                btn_back: "Back",
                 basicInfoTitle: "Basic Information", basicInfoDesc: "Please enter your gender, age and weight.",
                 label_gender: "Gender", gender_male: "Male", gender_female: "Female", label_age: "Age", label_weight: "Weight (kg)", placeholder_age: "e.g. 45", placeholder_weight: "e.g. 70",
                 btn_next_basic: "Next (Dental Habits)",
@@ -187,6 +194,7 @@
             },
             zh: {
                 title: "牙科治疗前安全检查", subtitle: "为了安全治疗，我们需要检查您的全身健康状况。", startBtn: "开始自测",
+                btn_back: "上一步",
                 basicInfoTitle: "基本信息", basicInfoDesc: "请输入您的性别、年龄和体重。", label_gender: "性别", gender_male: "男性", gender_female: "女性", label_age: "年龄", label_weight: "体重 (kg)", placeholder_age: "例如: 45", placeholder_weight: "例如: 70", btn_next_basic: "下一步 (口腔习惯)",
                 habitInfoTitle: "口腔护理习惯", habitInfoDesc: "请告知我们您的牙科就诊和护理习惯。", q_visit_freq: "您何时看牙医？", opt_visit_pain: "只在痛的时候", opt_visit_uncomfortable: "稍微不适时", opt_visit_periodic: "定期 (每6-12个月)", q_prev_discomfort: "以往治疗的不适经历", opt_painful: "太痛了", opt_okay: "还可以", q_brushing: "每天刷牙几次？", q_floss: "使用牙线或牙间刷吗？", btn_next_habit: "下一步 (牙科病史)",
                 dentalHistoryTitle: "牙科病史", dentalHistoryDesc: "请告知您过去的牙科经历。", q_extraction: "您曾经拔过牙吗？", q_anesthesia: "您曾经接受过牙科麻醉（注射）吗？", q_allergy: "当时对麻醉剂有过敏反应吗？", q_allergy_detail: "荨麻疹、呼吸困难、休克等",
@@ -214,6 +222,7 @@
             },
             ja: {
                 title: "歯科治療前の安全チェック", subtitle: "安全な診療のために全身の健康状態を確認します。", startBtn: "診断を開始",
+                btn_back: "戻る",
                 basicInfoTitle: "基本情報", basicInfoDesc: "性別、年齢、体重を入力してください。", label_gender: "性別", gender_male: "男性", gender_female: "女性", label_age: "年齢", label_weight: "体重 (kg)", placeholder_age: "例: 45", placeholder_weight: "例: 70", btn_next_basic: "次へ (口腔ケア習慣)",
                 habitInfoTitle: "口腔ケア習慣", habitInfoDesc: "普段の歯科受診やケア習慣について教えてください。", q_visit_freq: "歯科に行くタイミングは？", opt_visit_pain: "痛い時だけ", opt_visit_uncomfortable: "少し不快な時", opt_visit_periodic: "定期的 (6-12ヶ月毎)", q_prev_discomfort: "以前の治療で不快だった点", opt_painful: "痛すぎた", opt_okay: "大丈夫だった", q_brushing: "1日の歯磨き回数", q_floss: "フロスや歯間ブラシを使いますか？", btn_next_habit: "次へ (歯科治療歴)",
                 dentalHistoryTitle: "歯科治療歴", dentalHistoryDesc: "過去の歯科経験について教えてください。", q_extraction: "過去に歯を抜いた（抜歯）経験はありますか？", q_anesthesia: "歯科治療で麻酔注射をしたことはありますか？", q_allergy: "その際、麻酔薬にアレルギー反応はありましたか？", q_allergy_detail: "じんましん、呼吸困難、ショックなど",
@@ -241,6 +250,7 @@
             },
             vi: {
                 title: "Kiểm tra an toàn nha khoa", subtitle: "Kiểm tra sức khỏe toàn thân để điều trị an toàn.", startBtn: "Bắt đầu",
+                btn_back: "Quay lại",
                 basicInfoTitle: "Thông tin cơ bản", basicInfoDesc: "Vui lòng nhập giới tính, tuổi và cân nặng của bạn.", label_gender: "Giới tính", gender_male: "Nam", gender_female: "Nữ", label_age: "Tuổi", label_weight: "Cân nặng (kg)", placeholder_age: "Ví dụ: 45", placeholder_weight: "Ví dụ: 70", btn_next_basic: "Tiếp theo (Thói quen nha khoa)",
                 habitInfoTitle: "Thói quen nha khoa", habitInfoDesc: "Vui lòng cho biết thói quen chăm sóc răng miệng của bạn.", q_visit_freq: "Khi nào bạn đi nha sĩ?", opt_visit_pain: "Chỉ khi đau", opt_visit_uncomfortable: "Khi hơi khó chịu", opt_visit_periodic: "Định kỳ (6-12 tháng)", q_prev_discomfort: "Kinh nghiệm điều trị trước đây", opt_painful: "Quá đau", opt_okay: "Ổn, chịu đựng được", q_brushing: "Đánh răng bao nhiêu lần một ngày?", q_floss: "Có dùng chỉ nha khoa/bàn chải kẽ không?", btn_next_habit: "Tiếp theo (Lịch sử nha khoa)",
                 dentalHistoryTitle: "Lịch sử Nha khoa", dentalHistoryDesc: "Vui lòng cho biết kinh nghiệm nha khoa trước đây.", q_extraction: "Bạn đã từng nhổ răng chưa?", q_anesthesia: "Bạn đã từng tiêm thuốc tê nha khoa chưa?", q_allergy: "Bạn có bị dị ứng với thuốc tê không?", q_allergy_detail: "Nổi mề đay, khó thở, sốc, v.v.",
@@ -268,6 +278,7 @@
             },
             mn: {
                 title: "Шүдний эмчилгээний өмнөх аюулгүй байдлын шалгалт", subtitle: "Аюулгүй эмчилгээ хийхийн тулд таны ерөнхий эрүүл мэндийг шалгах болно.", startBtn: "Оношилгоо эхлүүлэх",
+                btn_back: "Буцах",
                 basicInfoTitle: "Үндсэн мэдээлэл", basicInfoDesc: "Хүйс, нас болон жингээ оруулна уу.", label_gender: "Хүйс", gender_male: "Эрэгтэй", gender_female: "Эмэгтэй", label_age: "Нас", label_weight: "Жин (кг)", placeholder_age: "Жишээ: 45", placeholder_weight: "Жишээ: 70", btn_next_basic: "Дараах (Шүдний зуршил)",
                 habitInfoTitle: "Амны хөндийн арчилгаа", habitInfoDesc: "Шүдний эмнэлэгт үзүүлэх болон арчилгааны талаар хэлнэ үү.", q_visit_freq: "Хэзээ шүдний эмчид очдог вэ?", opt_visit_pain: "Өвдсөн үед л", opt_visit_uncomfortable: "Ялимгүй таагүй үед", opt_visit_periodic: "Тогтмол (6-12 сар тутам)", q_prev_discomfort: "Өмнөх эмчилгээний үеийн таагүй байдал", opt_painful: "Маш их өвдсөн", opt_okay: "Зүгээр байсан", q_brushing: "Өдөрт хэдэн удаа шүдээ угаадаг вэ?", q_floss: "Шүдний утас ашигладаг уу?", btn_next_habit: "Дараах (Шүдний түүх)",
                 dentalHistoryTitle: "Шүдний эмчилгээний түүх", dentalHistoryDesc: "Өмнөх шүдний эмчилгээний туршлагаа бидэнд хэлнэ үү.", q_extraction: "Та шүдээ авахуулж байсан уу?", q_anesthesia: "Та шүдний эмчилгээ хийлгэхдээ мэдээ алдуулалт (тариур) хийлгэж байсан уу?", q_allergy: "Тухайн үед мэдээ алдуулагчаас харшилж байсан уу?", q_allergy_detail: "Тууралт, амьсгалахад хүндрэлтэй болох, шок гэх мэт.",
@@ -295,6 +306,7 @@
             },
             ar: {
                 title: "فحص السلامة قبل علاج الأسنان", subtitle: "نقوم بفحص صحتك العامة لضمان علاج آمن.", startBtn: "ابدأ التشخيص",
+                btn_back: "السابق",
                 basicInfoTitle: "المعلومات الأساسية", basicInfoDesc: "يرجى إدخال الجنس والعمر والوزن.", label_gender: "الجنس", gender_male: "ذكر", gender_female: "أنثى", label_age: "العمر", label_weight: "الوزن (كجم)", placeholder_age: "مثال: 45", placeholder_weight: "مثال: 70", btn_next_basic: "التالي (عادات الأسنان)",
                 habitInfoTitle: "عادات العناية بالأسنان", habitInfoDesc: "يرجى إخبارنا عن عادات زيارة طبيب الأسنان والعناية بها.", q_visit_freq: "متى تزور طبيب الأسنان؟", opt_visit_pain: "عند الألم فقط", opt_visit_uncomfortable: "عند الانزعاج قليلاً", opt_visit_periodic: "دورياً (كل 6-12 شهر)", q_prev_discomfort: "تجربة العلاج السابقة", opt_painful: "مؤلمة جداً", opt_okay: "كانت مقبولة", q_brushing: "كم مرة تنظف أسنانك في اليوم؟", q_floss: "هل تستخدم خيط الأسنان أو الفرشاة البينية؟", btn_next_habit: "التالي (تاريخ الأسنان)",
                 dentalHistoryTitle: "تاريخ علاج الأسنان", dentalHistoryDesc: "يرجى إخبارنا عن تجاربك السابقة مع علاج الأسنان.", q_extraction: "هل سبق لك خلع سن؟", q_anesthesia: "هل سبق لك تلقي تخدير الأسنان (حقن)؟", q_allergy: "هل عانيت من رد فعل تحسسي تجاه التخدير؟", q_allergy_detail: "طفح جلدي، صعوبة في التنفس، صدمة، إلخ.",
@@ -324,13 +336,13 @@
 
         const QUESTIONS = [
             { id: 'hypertension', key: 'q_hypertension', detailKey: 'd_hypertension', category: 'cardio', hasInputs: true },
-            { id: 'heart_disease', key: 'q_heart', detailKey: 'd_heart', category: 'cardio', hasInputs: true }, // NEW
+            { id: 'heart_disease', key: 'q_heart', detailKey: 'd_heart', category: 'cardio', hasInputs: true }, 
             { id: 'diabetes', key: 'q_diabetes', detailKey: 'd_diabetes', category: 'endocrine', hasInputs: true },
             { id: 'anticoagulant', key: 'q_anticoagulant', detailKey: 'd_anticoagulant', category: 'medication' },
             { id: 'bleeding_tendency', key: 'q_bleeding', detailKey: 'd_bleeding', category: 'medication' },
-            { id: 'osteoporosis', key: 'q_osteoporosis', detailKey: 'd_osteoporosis', category: 'medication', hasInputs: true }, // Changed
+            { id: 'osteoporosis', key: 'q_osteoporosis', detailKey: 'd_osteoporosis', category: 'medication', hasInputs: true }, 
             { id: 'infectious', key: 'q_infectious', detailKey: 'd_infectious', category: 'other', hasInputs: true },
-            { id: 'steroid', key: 'q_steroid', detailKey: 'd_steroid', category: 'medication' }, // NEW
+            { id: 'steroid', key: 'q_steroid', detailKey: 'd_steroid', category: 'medication' }, 
             { id: 'endocarditis', key: 'q_endocarditis', detailKey: 'd_endocarditis', category: 'cardio' },
             { id: 'kidney_liver', key: 'q_kidney', detailKey: 'd_kidney', category: 'organ' },
             { id: 'pregnancy', key: 'q_pregnancy', detailKey: 'd_pregnancy', category: 'other' }
@@ -343,7 +355,6 @@
             let riskLevel = 0;
             const t = TRANSLATIONS[lang];
 
-            // 0.1 Max Lidocaine Dosage
             if (answers.basic_weight) {
                 const weight = parseFloat(answers.basic_weight);
                 const lidocainePerCartridge = 36; 
@@ -358,9 +369,16 @@
                 });
             }
 
-            // 0.2 Dental Habits
             if (answers.habit_painful === 'yes') {
                 doctorNotes.push({type: 'warning', title: '통증 예민 주의', content: '이전 치료 시 심한 통증 호소. 충분한 마취 필요.'});
+            }
+            if (answers.habit_visit_freq && answers.habit_visit_freq !== 'periodic') {
+                doctorNotes.push({
+                    type: 'info', 
+                    title: '주기적 내원 필요 (Regular Check-up Needed)', 
+                    content: '내원 습관이 불규칙함. 정기 검진(6개월/1년) 및 예방 관리 유도 필요.'
+                });
+                if (status === 'safe') patientMessage += "\n(Tip: 증상이 없더라도 정기적인 치과 검진을 권장합니다!)";
             }
             const brushingCount = parseInt(answers.habit_brushing || 0);
             if (brushingCount <= 1) {
@@ -371,7 +389,6 @@
                 if (status === 'safe') patientMessage += "\n(Tip: 치실/치간칫솔 사용을 추천합니다!)";
             }
 
-            // 0.3 Dental History
             if (answers.dental_anesthesia_allergy) {
                 status = 'danger';
                 patientMessage = lang==='ko'?'마취제 알러지 확인 필요':t.msg_danger;
@@ -384,7 +401,6 @@
                 doctorNotes.push({ type: 'monitor', title: '치과 이력', content: hx.join(', ') });
             }
 
-            // 1. Hypertension
             if (answers.hypertension) {
                 riskLevel += 1;
                 const sys = parseInt(answers.bp_sys), dia = parseInt(answers.bp_dia);
@@ -398,7 +414,6 @@
                 doctorNotes.push({type: bpStatus, title: '고혈압', content: bpNote});
             }
 
-            // 2. Heart Disease (NEW)
             if (answers.heart_disease) {
                 riskLevel += 1;
                 let hStatus = 'warning';
@@ -412,7 +427,6 @@
                 doctorNotes.push({type: hStatus, title: '심장 질환 (Heart Disease)', content: hContent});
             }
 
-            // 3. Diabetes
             if (answers.diabetes) {
                 riskLevel += 1;
                 const bsl = parseInt(answers.bs_level), isHigh = answers.bs_high_symptom, isLow = answers.bs_low_symptom;
@@ -423,20 +437,17 @@
                 doctorNotes.push({type: dmStatus, title: '당뇨', content: dmNote});
             }
 
-            // 4. Anticoagulant
             if (answers.anticoagulant) {
                 if(status!=='danger') status='caution';
                 patientMessage = t.msg_caution;
                 doctorNotes.push({type: 'warning', title: '항혈전제', content: '지혈 주의. 와파린 INR 확인.'});
             }
 
-            // 5. Bleeding
             if (answers.bleeding_tendency) {
                 status = 'danger'; patientMessage = t.msg_danger;
                 doctorNotes.push({type: 'critical', title: '출혈 소인', content: '지혈 지연 병력. 혈액검사 필수.'});
             }
 
-            // 6. Osteoporosis (Updated)
             if (answers.osteoporosis) {
                 let osteoStatus = 'warning';
                 let osteoContent = '골다공증 약물 복용.';
@@ -452,7 +463,6 @@
                 doctorNotes.push({type: osteoStatus, title: '골다공증 (Osteoporosis)', content: osteoContent});
             }
 
-            // 7. Infectious (Updated Labels)
             if (answers.infectious) {
                 riskLevel += 1;
                 if (status === 'safe') status = 'caution';
@@ -469,7 +479,6 @@
                 doctorNotes.push({ type: answers.infectious_tb ? 'danger' : 'warning', title: '감염성 질환', content: infNote });
             }
 
-            // 8. Steroid (NEW)
             if (answers.steroid) {
                 doctorNotes.push({type: 'warning', title: '스테로이드 (Steroid)', content: '감염 주의 (Infection Risk). 면역 억제 가능성. 술 후 감염 관리 및 스트레스 고려.'});
             }
@@ -478,7 +487,6 @@
             if (answers.kidney_liver) { status='danger'; patientMessage = t.msg_danger; doctorNotes.push({type: 'warning', title: '신장/간 기능', content: '약물 대사/지혈 주의.'}); }
             if (answers.pregnancy) { if(status!=='danger') status='caution'; patientMessage = t.msg_caution; doctorNotes.push({type: 'monitor', title: '임신부', content: '2기 안전. 약물 금기.'}); }
 
-            // Other Meds (NEW)
             if (answers.other_meds) {
                 doctorNotes.push({type: 'info', title: '기타 복용 약물', content: answers.other_meds});
             }
@@ -487,8 +495,6 @@
             return { status, patientMessage, doctorNotes, riskLevel };
         };
 
-        // --- Components --- (Include callGemini and Main Component here)
-        // Re-use previous callGemini function...
         async function callGemini(systemPrompt, userPrompt, key) {
             if (!key) throw new Error("API Key Missing");
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`;
@@ -530,6 +536,16 @@
             const handleValueChange = (key, val) => setAnswers(p => ({...p, [key]: val}));
             const resetApp = () => { setAnswers({}); setStep('lang_select'); setViewMode('patient'); setAiResult(''); setPatientQuestion(''); };
             const result = useMemo(() => analyzeCondition(answers, lang), [answers, lang]);
+            
+            const handleBack = () => {
+                if (step === 'intro') setStep('lang_select');
+                else if (step === 'basic_info') setStep('intro');
+                else if (step === 'dental_habits') setStep('basic_info');
+                else if (step === 'dental_history') setStep('dental_habits');
+                else if (step === 'survey') setStep('dental_history');
+                else if (step === 'result') setStep('survey');
+            };
+            
             const handleNext = () => setStep('result');
 
             // Validations
@@ -542,7 +558,7 @@
                 return answers[q.id] !== undefined;
             });
 
-            // AI Features (Same as before)
+            // AI Features
             const askPatientAI = async () => {
                 if (!patientQuestion.trim()) return;
                 if (!localApiKey) { setShowSettings(true); return; }
@@ -559,6 +575,51 @@
             };
 
             const fontClass = lang === 'zh' ? 'lang-sc' : lang === 'ja' ? 'lang-jp' : lang === 'ar' ? 'lang-ar' : '';
+
+            // Print Summary Data Generation
+            const getPrintSummary = () => {
+                const mapVisit = { 'pain': '아플 때만', 'uncomfortable': '불편할 때', 'periodic': '정기적' };
+                const mapPain = { 'yes': '심함', 'no': '없음/보통' };
+                const mapFloss = { true: '사용', false: '미사용' };
+                
+                return (
+                    <div className="hidden print:block text-sm space-y-4">
+                        <table className="print-table">
+                            <tbody>
+                                <tr><th>구강 습관</th><td>
+                                    방문: {mapVisit[answers.habit_visit_freq] || '-'}<br/>
+                                    통증경험: {mapPain[answers.habit_painful] || '-'}<br/>
+                                    양치: {answers.habit_brushing}회/일<br/>
+                                    보조용품: {mapFloss[answers.habit_floss] || '-'}
+                                </td></tr>
+                                <tr><th>치과 이력</th><td>
+                                    발치경험: {answers.dental_extraction ? '있음' : '없음'}<br/>
+                                    마취경험: {answers.dental_anesthesia ? '있음' : '없음'}
+                                    {answers.dental_anesthesia && <><br/><strong>마취알러지: {answers.dental_anesthesia_allergy ? '있음' : '없음'}</strong></>}
+                                </td></tr>
+                                <tr><th>전신 질환</th><td>
+                                    {QUESTIONS.filter(q => answers[q.id]).length === 0 ? '특이사항 없음' : (
+                                        <ul className="list-disc pl-4 m-0">
+                                            {answers.hypertension && <li>고혈압 ({answers.bp_sys}/{answers.bp_dia})</li>}
+                                            {answers.heart_disease && <li>심장질환 (6개월내 증상: {answers.heart_symptom_6mo?'있음':'없음'})</li>}
+                                            {answers.diabetes && <li>당뇨 (BST: {answers.bs_level})</li>}
+                                            {answers.anticoagulant && <li>항혈전제 복용</li>}
+                                            {answers.bleeding_tendency && <li>출혈 소인</li>}
+                                            {answers.osteoporosis && <li>골다공증 ({answers.osteoporosis_type==='injection'?'주사':'경구'})</li>}
+                                            {answers.infectious && <li>감염성 질환</li>}
+                                            {answers.steroid && <li>스테로이드</li>}
+                                            {answers.endocarditis && <li>심내막염 병력</li>}
+                                            {answers.kidney_liver && <li>신장/간 질환</li>}
+                                            {answers.pregnancy && <li>임신 가능성</li>}
+                                        </ul>
+                                    )}
+                                </td></tr>
+                                {answers.other_meds && <tr><th>기타 약물</th><td>{answers.other_meds}</td></tr>}
+                            </tbody>
+                        </table>
+                    </div>
+                );
+            };
 
             return (
                 <div className={`min-h-screen bg-slate-50 flex justify-center ${fontClass}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
@@ -713,7 +774,7 @@
                                     {viewMode === 'patient' && (
                                         <div className="space-y-6">
                                             {/* Print Header */}
-                                            <div className="print-only border-b-2 border-slate-300 pb-4 mb-6"><h1 className="text-2xl font-bold mb-4">Dental Safe Check Report</h1><div className="grid grid-cols-2 gap-4 text-sm"><div className="flex items-end border-b border-black pb-1"><span className="font-bold w-24">성명(Name):</span><span className="flex-1"></span></div><div className="flex items-end border-b border-black pb-1"><span className="font-bold w-24">성별(Gender):</span><span className="flex-1 font-mono pl-2">{answers.basic_gender==='male'?'M':answers.basic_gender==='female'?'F':''}</span></div><div className="flex items-end border-b border-black pb-1"><span className="font-bold w-24">생년월일:</span><span className="flex-1"></span></div><div className="flex items-end border-b border-black pb-1"><span className="font-bold w-24">환자번호:</span><span className="flex-1"></span></div></div></div>
+                                            <div className="hidden print:block border-b-2 border-slate-300 pb-4 mb-6"><h1 className="text-2xl font-bold mb-4">Dental Safe Check Report</h1><div className="grid grid-cols-2 gap-4 text-sm"><div className="flex items-end border-b border-black pb-1"><span className="font-bold w-24">성명(Name):</span><span className="flex-1"></span></div><div className="flex items-end border-b border-black pb-1"><span className="font-bold w-24">성별(Gender):</span><span className="flex-1 font-mono pl-2">{answers.basic_gender==='male'?'M':answers.basic_gender==='female'?'F':''}</span></div><div className="flex items-end border-b border-black pb-1"><span className="font-bold w-24">생년월일:</span><span className="flex-1"></span></div><div className="flex items-end border-b border-black pb-1"><span className="font-bold w-24">환자번호:</span><span className="flex-1"></span></div></div></div>
                                             <div className={`p-8 rounded-3xl flex flex-col items-center justify-center space-y-4 shadow-lg border-4 text-center ${result.status==='safe'?'bg-green-50 border-green-100':result.status==='caution'?'bg-yellow-50 border-yellow-100':'bg-red-50 border-red-100'}`}>{result.status==='safe'&&<Icons.CheckCircle className="w-24 h-24 text-green-500"/>}{result.status==='caution'&&<Icons.AlertTriangle className="w-24 h-24 text-yellow-500"/>}{result.status==='danger'&&<Icons.ShieldAlert className="w-24 h-24 text-red-500"/>}<h2 className="text-2xl font-bold">{t[result.status]}</h2><p className="text-slate-600 font-medium whitespace-pre-line">{result.patientMessage}</p></div>
                                             <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 no-print"><div className="flex items-center gap-2 mb-3"><Icons.Sparkles className="text-blue-600 w-5 h-5"/> <h3 className="font-bold text-blue-900">{t.ai_title}</h3></div><p className="text-xs text-blue-700 mb-3">{t.ai_desc}</p><div className="flex gap-2"><input type="text" value={patientQuestion} onChange={e=>setPatientQuestion(e.target.value)} placeholder={t.ai_placeholder} className="flex-1 p-2 border rounded outline-none text-sm"/><button onClick={askPatientAI} disabled={aiLoading} className="bg-blue-600 text-white px-4 rounded font-bold text-sm">{aiLoading?<div className="loader"></div>:t.ai_btn}</button></div>{aiResult&&<div className="mt-4 bg-white p-4 rounded border text-sm" dangerouslySetInnerHTML={{__html: marked.parse(aiResult)}}/>}{aiError&&<p className="text-red-500 text-xs mt-2">{aiError}</p>}</div>
                                             <div className="bg-white p-5 rounded-xl shadow-sm border"><h3 className="font-bold text-slate-700 mb-3 flex items-center gap-2"><Icons.FileText size={18}/> {t.items_checked}</h3><ul className="space-y-2 text-sm"><li className="text-sm bg-slate-50 p-2 rounded text-slate-700 border border-slate-100"><span className="font-bold text-blue-600">• {t.basicInfoTitle}:</span> {answers.basic_gender==='male'?t.gender_male:t.gender_female} / {answers.basic_age} / {answers.basic_weight}kg</li>{(!answers.dental_extraction && !answers.dental_anesthesia && !QUESTIONS.some(q=>answers[q.id]))?<li className="text-slate-400">{t.none}</li>:(<>{answers.dental_extraction&&<li>• {t.q_extraction}</li>}{answers.dental_anesthesia&&<li>• {t.q_anesthesia} {answers.dental_anesthesia_allergy?`(${t.q_allergy}: ${t.yes})`:''}</li>}{QUESTIONS.filter(q=>answers[q.id]).map(q=><li key={q.id}>• {t[q.key]}</li>)}</>)}</ul></div>
@@ -723,10 +784,18 @@
                                     {/* Doctor View */}
                                     {viewMode === 'doctor' && (
                                         <div className="space-y-4">
-                                            <div className="print-only border-b-2 border-slate-300 pb-4 mb-6"><h1 className="text-2xl font-bold mb-4">Dental Safe Check Report (Doctor View)</h1><div className="grid grid-cols-2 gap-4 text-sm"><div className="flex items-end border-b border-black pb-1"><span className="font-bold w-24">성명:</span><span className="flex-1"></span></div><div className="flex items-end border-b border-black pb-1"><span className="font-bold w-24">성별/나이:</span><span className="flex-1 pl-2">{answers.basic_gender==='male'?'M':'F'} / {answers.basic_age}</span></div><div className="flex items-end border-b border-black pb-1"><span className="font-bold w-24">체중:</span><span className="flex-1 pl-2">{answers.basic_weight}kg</span></div><div className="flex items-end border-b border-black pb-1"><span className="font-bold w-24">ID:</span><span className="flex-1"></span></div></div></div>
-                                            <div className="bg-slate-800 text-white p-4 rounded-xl shadow-lg"><h3 className="font-bold text-lg flex items-center gap-2"><Icons.Stethoscope size={20}/> Clinical Summary (KR)</h3><div className="text-sm mt-1">Status: <span className={`font-bold px-1 rounded ${result.status==='safe'?'bg-green-500':result.status==='caution'?'bg-yellow-500 text-black':'bg-red-500'}`}>{result.status.toUpperCase()}</span> | Lang: {lang.toUpperCase()}</div></div>
+                                            <div className="hidden print:block border-b-2 border-slate-300 pb-4 mb-6"><h1 className="text-2xl font-bold mb-4">Dental Safe Check Report (Doctor View)</h1><div className="grid grid-cols-2 gap-4 text-sm"><div className="flex items-end border-b border-black pb-1"><span className="font-bold w-24">성명:</span><span className="flex-1"></span></div><div className="flex items-end border-b border-black pb-1"><span className="font-bold w-24">성별/나이:</span><span className="flex-1 pl-2">{answers.basic_gender==='male'?'M':'F'} / {answers.basic_age}</span></div><div className="flex items-end border-b border-black pb-1"><span className="font-bold w-24">체중:</span><span className="flex-1 pl-2">{answers.basic_weight}kg</span></div><div className="flex items-end border-b border-black pb-1"><span className="font-bold w-24">ID:</span><span className="flex-1"></span></div></div></div>
+                                            {/* Patient Summary for Print (Inserted Here) */}
+                                            {getPrintSummary()}
+                                            
+                                            <div className="bg-slate-800 text-white p-4 rounded-xl shadow-lg"><h3 className="font-bold text-lg flex items-center gap-2"><Icons.Stethoscope size={20}/> Clinical Summary (KR)</h3><div className="text-sm mt-1">Status: <span className={`font-bold px-1 rounded ${result.status==='safe'?'bg-green-500':result.status==='caution'?'bg-yellow-500 text-black':'bg-red-500'}`}>{result.status.toUpperCase()}</span> | Language: {lang.toUpperCase()}</div></div>
                                             {result.doctorNotes.length>0&&( <div className="bg-white border p-4 rounded-xl shadow-sm no-print"><h4 className="font-bold text-slate-700 flex gap-2 mb-2"><Icons.Sparkles size={16} className="text-purple-600"/> AI Assistance (KR)</h4><button onClick={generateReferralLetter} disabled={aiLoading} className="w-full py-2 bg-purple-50 text-purple-700 border border-purple-200 rounded font-bold text-sm flex justify-center gap-2">{aiLoading?<div className="loader"></div>:'진료 의뢰서 작성 (Referral Letter)'}</button>{aiResult&&<div className="mt-3 bg-slate-50 p-4 rounded border text-sm font-mono whitespace-pre-wrap">{aiResult}</div>}</div>)}
                                             {result.doctorNotes.length===0?<div className="text-center py-10 bg-white border border-dashed rounded-xl text-slate-500">No Specific Contraindications</div>:result.doctorNotes.map((n,i)=>(<div key={i} className={`border-l-4 rounded-r-xl p-4 bg-white shadow-sm ${n.type==='critical'?'border-red-600':n.type==='danger'?'border-orange-500':n.type==='warning'?'border-yellow-500':n.type==='info'?'border-sky-500 bg-sky-50':'border-blue-500'}`}><h4 className="font-bold text-sm mb-1 flex items-center gap-2">{n.type==='critical'?<Icons.AlertTriangle size={16} className="text-red-600"/>:n.type==='info'?<Icons.Scale size={16} className="text-sky-600"/>:null}{n.title}</h4><p className="text-sm text-slate-600 whitespace-pre-line">{n.content}</p></div>))}
+                                            
+                                            <div className="hidden print:flex mt-10 pt-10 border-t border-black justify-between items-end">
+                                                <div>작성일: ____________________</div>
+                                                <div>담당의 서명: ____________________</div>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -735,20 +804,28 @@
 
                         {/* Footer */}
                         {step !== 'lang_select' && step !== 'result' && (
-                            <div className="p-4 bg-white border-t no-print">
+                            <div className="p-4 bg-white border-t no-print flex gap-3">
                                 {step !== 'intro' && (
-                                    <button 
-                                        onClick={()=>{
-                                            if(step==='basic_info')setStep('dental_habits');
-                                            else if(step==='dental_habits')setStep('dental_history');
-                                            else if(step==='dental_history')setStep('survey');
-                                            else handleNext();
-                                        }}
-                                        disabled={step==='basic_info'?!basicAnswered:step==='dental_habits'?!habitAnswered:step==='dental_history'?!dentalAnswered:!medicalAnswered}
-                                        className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition ${(step==='basic_info'?basicAnswered:step==='dental_habits'?habitAnswered:step==='dental_history'?dentalAnswered:medicalAnswered)?'bg-blue-600 text-white hover:bg-blue-700 active:scale-95':'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
-                                    >
-                                        {step==='basic_info'?t.btn_next_basic:step==='dental_habits'?t.btn_next_habit:step==='dental_history'?t.btn_next:t.btn_result} <Icons.ChevronRight/>
-                                    </button>
+                                    <>
+                                        <button 
+                                            onClick={handleBack}
+                                            className="w-1/3 py-4 rounded-xl font-bold text-lg bg-slate-100 text-slate-500 hover:bg-slate-200 transition flex items-center justify-center gap-1"
+                                        >
+                                            <Icons.ChevronLeft /> {t.btn_back}
+                                        </button>
+                                        <button 
+                                            onClick={()=>{
+                                                if(step==='basic_info')setStep('dental_habits');
+                                                else if(step==='dental_habits')setStep('dental_history');
+                                                else if(step==='dental_history')setStep('survey');
+                                                else handleNext();
+                                            }}
+                                            disabled={step==='basic_info'?!basicAnswered:step==='dental_habits'?!habitAnswered:step==='dental_history'?!dentalAnswered:!medicalAnswered}
+                                            className={`flex-1 py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition ${(step==='basic_info'?basicAnswered:step==='dental_habits'?habitAnswered:step==='dental_history'?dentalAnswered:medicalAnswered)?'bg-blue-600 text-white hover:bg-blue-700 active:scale-95':'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
+                                        >
+                                            {step==='basic_info'?t.btn_next_basic:step==='dental_habits'?t.btn_next_habit:step==='dental_history'?t.btn_next:t.btn_result} <Icons.ChevronRight/>
+                                        </button>
+                                    </>
                                 )}
                             </div>
                         )}
