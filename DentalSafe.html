@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dental Safe Check - Desktop Professional</title>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Sans+SC:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f1f5f9; } /* Slate-100 background */
+        .lang-sc { font-family: 'Noto Sans SC', sans-serif; }
+        .lang-jp { font-family: 'Noto Sans JP', sans-serif; }
+        .lang-ar { font-family: 'Noto Sans Arabic', sans-serif; direction: rtl; }
+        
+        .animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+        .loader {
+            border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #3b82f6;
+            width: 20px; height: 20px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* --- A4 Print Optimization (수정됨) --- */
+        @media print {
+            @page { margin: 1cm; size: A4; }
+            
+            /* 배경 및 레이아웃 초기화 */
+            body, html, #root { background-color: white !important; height: auto !important; overflow: visible !important; display: block !important; }
+            
+            /* [중요] 화면용 UI 전체 숨김 */
+            .desktop-layout, .no-print, header, .shadow-xl { display: none !important; }
+            
+            /* 인쇄용 영역만 표시 */
+            .print-only { display: block !important; width: 100% !important; margin: 0 !important; }
+            
+            /* 텍스트 강제 검정 */
+            .text-slate-500, .text-slate-600, .text-blue-600, .text-red-600 { color: black !important; }
+            
+            /* 테이블 스타일 */
+            table { width: 100%; border-collapse: collapse; font-size: 11px; }
+            th, td { border: 1px solid #000; padding: 6px; text-align: left; }
+            th { background-color: #f3f4f6 !important; font-weight: bold; text-align: center; }
+        }
+        .print-only { display: none; } /* 화면에서는 숨김 */
+    </style>
+</head>
+<body class="text-slate-800 h-screen overflow-hidden flex items-center justify-center">
+    <div id="root" class="w-full h-full flex items-center justify-center"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo, useEffect } = React;
+        const apiKey = ""; 
+
+        // --- Icons ---
+        const Icon = ({ children, color = "currentColor", size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
+        );
+        const Icons = {
+            Stethoscope: (p) => <Icon {...p}><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v6"/><path d="M11 17a6 6 0 0 1-6-6"/></Icon>,
+            Activity: (p) => <Icon {...p}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></Icon>,
+            AlertTriangle: (p) => <Icon {...p}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></Icon>,
+            CheckCircle: (p) => <Icon {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></Icon>,
+            XCircle: (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></Icon>,
+            ShieldAlert: (p) => <Icon {...p}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></Icon>,
+            FileText: (p) => <Icon {...p}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></Icon>,
+            User: (p) => <Icon {...p}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></Icon>,
+            UserCheck: (p) => <Icon {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></Icon>,
+            ChevronRight: (p) => <Icon {...p}><polyline points="9 18 15 12 9 6"/></Icon>,
+            ChevronLeft: (p) => <Icon {...p}><polyline points="15 18 9 12 15 6"/></Icon>,
+            RefreshCcw: (p) => <Icon {...p}><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></Icon>,
+            HeartPulse: (p) => <Icon {...p}><path d="M19 14c1.49-1.28 3.6-2.34 4.58-2.74a.45.45 0 0 0 .19-.57 2.37 2.37 0 0 0-2.2-1.74c-.9 0-1.74.45-2.2 1.17l-.37.56a.46.46 0 0 1-.77 0l-2.07-3.1a.48.48 0 0 0-.79-.01l-1.37 1.95a.48.48 0 0 1-.77.02l-1.31-1.8a.48.48 0 0 0-.78-.01L4.85 15.3a.48.48 0 0 1-.84-.14L2.8 11.7a.48.48 0 0 0-.85-.09l-1.72 2.45a.45.45 0 0 0 .09.6c1.02.8 3.1 2.1 4.58 2.74a4.34 4.34 0 0 0 3.73-.25L12 15l2.45 1.55a4.34 4.34 0 0 0 3.72.25c.5-.22 1.42-.58 2.23-1.07l.2-.13"/></Icon>,
+            Pill: (p) => <Icon {...p}><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><line x1="8.5" y1="8.5" x2="15.5" y2="15.5"/></Icon>,
+            Syringe: (p) => <Icon {...p}><path d="m18 2 4 4"/><path d="m17 7 3-3"/><path d="M19 9 8.7 19.3c-1 1-2.5 1-3.4 0l-.6-.6c-1-1-1-2.5 0-3.4L15 5"/><path d="m9 11 4 4"/><path d="m5 19-3 3"/></Icon>,
+            Droplet: (p) => <Icon {...p}><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></Icon>,
+            Biohazard: (p) => <Icon {...p}><circle cx="12" cy="12" r="10" /><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" stroke="none" /><path d="M8 12h8"/><path d="M12 8v8"/></Icon>,
+            Printer: (p) => <Icon {...p}><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></Icon>,
+            Sparkles: (p) => <Icon {...p}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></Icon>,
+            Settings: (p) => <Icon {...p}><path d="M12.22 2h-.44a2 2 0 0 1-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.73v.51a2 2 0 0 1-1 1.73l-.15.1a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73v.18a2 2 0 0 1 2 2h.44a2 2 0 0 1 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.73v-.51a2 2 0 0 1 1-1.73l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 1-2-2z"/><circle cx="12" cy="12" r="3"/></Icon>,
+            Tooth: (p) => <Icon {...p}><path d="M4.2 18.2A6.66 6.66 0 0 1 4 15V8a4 4 0 0 1 4-4 4 4 0 0 1 4 4v3a4 4 0 0 1 4-4 4 4 0 0 1 4 4v7a6.66 6.66 0 0 1-.2 3.2 2 2 0 0 1-3.8 0A4 4 0 0 1 12 18a4 4 0 0 1-4.2.2 2 2 0 0 1-3.6 0Z"/></Icon>,
+            Globe: (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></Icon>,
+            Lock: (p) => <Icon {...p}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></Icon>,
+            Scale: (p) => <Icon {...p}><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></Icon>,
+            Brush: (p) => <Icon {...p}><path d="m9.06 11.9 8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2.5 2.24 0 .46.62.8 1 .8.66 0 1.21-.57 1.39-1.3"/><path d="M14 20h.01"/><path d="M10 20h.01"/><path d="M14 16h.01"/><path d="M10 16h.01"/></Icon>
+        };
+
+        const TRANSLATIONS = {
+            ko: {
+                title: "치과 치료 전 안전 점검", subtitle: "안전한 진료를 위해 환자분의 전신 건강 상태를 체크합니다.", startBtn: "자가진단 시작하기", btn_back: "이전",
+                basicInfoTitle: "기본 정보", basicInfoDesc: "성별, 나이, 몸무게를 입력해주세요.", label_gender: "성별", gender_male: "남성", gender_female: "여성", label_age: "나이 (세)", label_weight: "몸무게 (kg)", placeholder_age: "예: 45", placeholder_weight: "예: 70", btn_next_basic: "다음 (구강 관리 습관)",
+                habitInfoTitle: "구강 관리 습관", habitInfoDesc: "평소 치과 방문 및 관리 습관을 알려주세요.", q_visit_freq: "언제 치과에 가시나요?", opt_visit_pain: "아플 때만 감", opt_visit_uncomfortable: "아프지 않아도 조금 불편하면 감", opt_visit_periodic: "주기적으로 감 (6개월~12개월 마다)",
+                q_prev_discomfort: "이전 치과 치료 시 불편했던 점", opt_painful: "너무 아팠어요", opt_okay: "괜찮았어요. 받을만 했어요", q_brushing: "하루에 양치는 몇 번 하시나요?", q_floss: "치실이나 치간칫솔을 사용하시나요?", btn_next_habit: "다음 (치과 진료 이력)",
+                dentalHistoryTitle: "치과 진료 이력", dentalHistoryDesc: "과거 치과 경험에 대해 먼저 알려주세요.", q_extraction: "과거에 치과에서 이를 뽑아본(발치) 경험이 있나요?", q_anesthesia: "치과 치료 시 마취 주사를 맞아보신 적이 있나요?", q_allergy: "혹시 그때 마취제에 알러지 반응이 있었나요?", q_allergy_detail: "두드러기, 호흡곤란, 쇼크 등",
+                medHistoryTitle: "전신 건강 상태", medHistoryDesc: "해당되는 항목에 체크해주세요.", yes: "네", no: "아니요", yes_had: "네, 있었어요",
+                placeholder_bp: "현재 혈압을 아시나요?", placeholder_bs: "현재 혈당 상태", placeholder_infectious: "해당되는 질환을 모두 선택해주세요",
+                q_hypertension: "현재 고혈압 진단을 받았거나 혈압약을 복용 중이신가요?", d_hypertension: "진단 받은 적이 없더라도 혈압이 높다고 느끼시면 체크해주세요.",
+                q_heart: "협심증, 부정맥 등 심장 질환이 있으신가요?", d_heart: "관상동맥 질환, 스텐트 시술 등", q_heart_symptom: "최근 6개월 이내에 가슴 통증이나 호흡 곤란 증상이 있었나요?",
+                q_diabetes: "당뇨병이 있거나 인슐린/당뇨약을 사용 중이신가요?", d_diabetes: "당뇨가 의심되거나 최근 혈당 수치 확인이 필요하시면 체크해주세요.",
+                lbl_high_sugar: "고혈당 증상 (High Sugar)", lbl_low_sugar: "저혈당 증상 (Low Sugar)",
+                q_anticoagulant: "피를 묽게 하는 약(아스피린, 와파린 등)을 드시나요?", d_anticoagulant: "심혈관 질환, 뇌졸중 예방 목적으로 복용 중입니다.",
+                q_bleeding: "상처가 났을 때 피가 잘 멎지 않거나, 멍이 쉽게 드나요?", d_bleeding: "과거 발치나 수술 후 지혈이 어려웠던 경험이 있다면 체크해주세요.",
+                q_osteoporosis: "골다공증 약을 드시거나 주사를 맞으신 적이 있나요?", d_osteoporosis: "비스포스포네이트 계열 약물 복용 혹은 주사 치료 경험.", q_osteo_type: "드시는 약인가요, 주사제인가요?", opt_oral: "먹는 약 (경구)", opt_inject: "주사제",
+                q_osteo_date: "최근 투약일이 언제인가요?", placeholder_date: "예: 2023.12 또는 어제",
+                q_infectious: "간염, 결핵 등 전염성 질환을 앓고 계신가요?", d_infectious: "체크 시 세부 항목을 선택할 수 있습니다. 의료진의 안전을 위해 꼭 알려주세요.",
+                q_steroid: "스테로이드 제제를 복용하거나 주사를 맞고 계신가요?", d_steroid: "장기 복용 중인 경우 체크해주세요.",
+                q_endocarditis: "과거에 심내막염을 앓았거나 인공 심장 판막 수술을 받으셨나요?", d_endocarditis: "선천성 심장 질환 포함.",
+                q_kidney: "신장(콩팥) 투석 중이거나 심각한 간 질환이 있으신가요?", d_kidney: "간경화, 말기 신부전 등.",
+                q_pregnancy: "현재 임신 중이거나 임신 가능성이 있나요?", d_pregnancy: "수유 중인 경우도 포함해주세요.",
+                q_other_meds: "그 외 복용 중인 다른 약물이 있다면 적어주세요.",
+                btn_next: "다음 (전신질환 체크)", btn_result: "결과 확인하기", btn_reset: "처음으로", btn_print: "인쇄",
+                result_patient: "환자용 결과", result_doctor: "의료진용 상세",
+                safe: "진료 가능", caution: "상담 필요", danger: "주의 요망",
+                msg_safe: "오늘 예정된 치료를 받을 수 있습니다.", msg_caution: "의료진 상담 후 안전하게 치료를 진행할 수 있습니다.", msg_danger: "안전을 위해 내과 전문의 소견이 필요하거나, 오늘 치료가 미루어질 수 있습니다.",
+                ai_title: "AI 치과 상담소", ai_desc: "궁금한 점을 물어보세요. AI가 알기 쉽게 설명해드립니다.", ai_placeholder: "질문을 입력하세요...", ai_btn: "질문",
+                items_checked: "내가 체크한 항목", none: "특이사항 없음", other: "기타", input_other: "질환명을 입력해주세요",
+                privacyNotice: "지금 작성하는 정보는 환자분의 안전한 치과진료를 위해서만 사용되며, 다른 용도로는 사용되지 않습니다.",
+                disease_hbv: "HBV (B형 간염)", disease_hcv: "HCV (C형 간염)", disease_tb: "TB (결핵)", disease_hiv: "HIV (에이즈)", disease_other: "기타"
+            },
+            en: {
+                title: "Pre-treatment Dental Safety Check", subtitle: "We check your general health for safe treatment.", startBtn: "Start Assessment", btn_back: "Back",
+                basicInfoTitle: "Basic Information", basicInfoDesc: "Please enter your gender, age and weight.", label_gender: "Gender", gender_male: "Male", gender_female: "Female", label_age: "Age", label_weight: "Weight (kg)", placeholder_age: "e.g. 45", placeholder_weight: "e.g. 70", btn_next_basic: "Next (Dental Habits)",
+                habitInfoTitle: "Dental Habits", habitInfoDesc: "Please tell us about your usual dental care habits.", q_visit_freq: "When do you visit the dentist?", opt_visit_pain: "Only when it hurts", opt_visit_uncomfortable: "When slightly uncomfortable", opt_visit_periodic: "Periodically (6-12 months)",
+                q_prev_discomfort: "Previous treatment experience", opt_painful: "Too painful", opt_okay: "It was okay", q_brushing: "Brushing times per day", q_floss: "Use floss/interdental brush?", btn_next_habit: "Next (Dental History)",
+                dentalHistoryTitle: "Dental History", dentalHistoryDesc: "Please tell us about your past dental experiences.", q_extraction: "Have you ever had a tooth extracted?", q_anesthesia: "Have you ever had dental anesthesia (injections)?", q_allergy: "Did you have an allergic reaction to the anesthesia?", q_allergy_detail: "Hives, difficulty breathing, shock, etc.",
+                medHistoryTitle: "Medical History", medHistoryDesc: "Please check all that apply.", yes: "Yes", no: "No", yes_had: "Yes, I did",
+                placeholder_bp: "Do you know your current blood pressure?", placeholder_bs: "Current Blood Sugar Status", placeholder_infectious: "Please select all applicable diseases",
+                q_hypertension: "Do you have hypertension or take blood pressure medication?", d_hypertension: "Check if you feel your blood pressure is high even without diagnosis.",
+                q_heart: "Do you have heart disease (Angina, Arrhythmia)?", d_heart: "Coronary artery disease, Stent placement, etc.", q_heart_symptom: "Have you had chest pain or shortness of breath in the last 6 months?",
+                q_diabetes: "Do you have diabetes or use insulin/medication?", d_diabetes: "Check if you suspect diabetes or need recent level check.",
+                lbl_high_sugar: "High Sugar Symptom", lbl_low_sugar: "Low Sugar Symptom",
+                q_anticoagulant: "Do you take blood thinners (Aspirin, Warfarin, etc.)?", d_anticoagulant: "For cardiovascular disease or stroke prevention.",
+                q_bleeding: "Do you bleed easily or have difficulty stopping bleeding?", d_bleeding: "History of prolonged bleeding after extraction/surgery.",
+                q_osteoporosis: "Do you take osteoporosis medication or injections?", d_osteoporosis: "Bisphosphonates or injection therapy history.", q_osteo_type: "Is it oral medication or injection?", opt_oral: "Oral (Pill)", opt_inject: "Injection",
+                q_osteo_date: "When was the last dose?", placeholder_date: "e.g. Yesterday or 2023.12",
+                q_infectious: "Do you have infectious diseases?", d_infectious: "Please specify for safety.",
+                q_steroid: "Are you taking or receiving Steroids?", d_steroid: "Check if long-term usage.",
+                q_endocarditis: "History of endocarditis or artificial heart valve?", d_endocarditis: "Includes congenital heart defects.",
+                q_kidney: "On dialysis or have severe liver disease?", d_kidney: "Cirrhosis, end-stage renal failure, etc.",
+                q_pregnancy: "Are you pregnant or possibly pregnant?", d_pregnancy: "Includes breastfeeding.",
+                q_other_meds: "Please list any other medications you are taking.",
+                btn_next: "Next (Medical Check)", btn_result: "Check Results", btn_reset: "Reset", btn_print: "Print",
+                result_patient: "Patient View", result_doctor: "Doctor View",
+                safe: "Safe for Treatment", caution: "Consultation Needed", danger: "Attention Required",
+                msg_safe: "You can receive the scheduled treatment today.", msg_caution: "Treatment can proceed safely after consultation.", msg_danger: "Treatment may be postponed for safety reasons.",
+                ai_title: "AI Dental Assistant", ai_desc: "Ask any questions about your condition.", ai_placeholder: "Type your question...", ai_btn: "Ask",
+                items_checked: "Items Checked", none: "None", other: "Other", input_other: "Please specify",
+                privacyNotice: "The information you provide is used solely for your safe dental treatment and will not be used for any other purpose.",
+                disease_hbv: "HBV (Hepatitis B)", disease_hcv: "HCV (Hepatitis C)", disease_tb: "TB (Tuberculosis)", disease_hiv: "HIV (AIDS)", disease_other: "Other"
+            },
+            zh: {
+                title: "牙科治疗前安全检查", subtitle: "为了安全治疗，我们需要检查您的全身健康状况。", startBtn: "开始自测", btn_back: "上一步",
+                basicInfoTitle: "基本信息", basicInfoDesc: "请输入您的性别、年龄和体重。", label_gender: "性别", gender_male: "男性", gender_female: "女性", label_age: "年龄", label_weight: "体重 (kg)", placeholder_age: "例如: 45", placeholder_weight: "例如: 70", btn_next_basic: "下一步 (口腔习惯)",
+                habitInfoTitle: "口腔护理习惯", habitInfoDesc: "请告知我们您的牙科就诊和护理习惯。", q_visit_freq: "您何时看牙医？", opt_visit_pain: "只在痛的时候", opt_visit_uncomfortable: "稍微不适时", opt_visit_periodic: "定期 (每6-12个月)", q_prev_discomfort: "以往治疗的不适经历", opt_painful: "太痛了", opt_okay: "还可以", q_brushing: "每天刷牙几次？", q_floss: "使用牙线或牙间刷吗？", btn_next_habit: "下一步 (牙科病史)",
+                dentalHistoryTitle: "牙科病史", dentalHistoryDesc: "请告知您过去的牙科经历。", q_extraction: "您曾经拔过牙吗？", q_anesthesia: "您曾经接受过牙科麻醉（注射）吗？", q_allergy: "当时对麻醉剂有过敏反应吗？", q_allergy_detail: "荨麻疹、呼吸困难、休克等",
+                medHistoryTitle: "全身健康状况", medHistoryDesc: "请勾选所有适用项。", yes: "是", no: "否", yes_had: "是的，有过",
+                placeholder_bp: "您知道当前的血压吗？", placeholder_bs: "当前血糖状态", placeholder_infectious: "请选择所有适用的疾病",
+                q_hypertension: "您有高血压或正在服用降压药吗？", d_hypertension: "即使没有确诊，若感觉血压高也请勾选。",
+                q_heart: "您有心脏病（心绞痛、心律失常）吗？", d_heart: "冠心病、支架植入等。", q_heart_symptom: "最近6个月内有胸痛或呼吸困难吗？",
+                q_diabetes: "您有糖尿病或使用胰岛素/药物吗？", d_diabetes: "若怀疑糖尿病或需检查血糖请勾选。",
+                lbl_high_sugar: "高血糖症状", lbl_low_sugar: "低血糖症状",
+                q_anticoagulant: "您服用血液稀释剂（阿司匹林、华法林等）吗？", d_anticoagulant: "用于预防心血管疾病或中风。",
+                q_bleeding: "您是否容易出血或止血困难？", d_bleeding: "拔牙或手术后止血困难史。",
+                q_osteoporosis: "您服用骨质疏松药物或注射过吗？", d_osteoporosis: "双膦酸盐类药物或注射治疗史。", q_osteo_type: "是口服药还是注射剂？", opt_oral: "口服", opt_inject: "注射",
+                q_osteo_date: "最近一次用药是什么时候？", placeholder_date: "例如：昨天 或 2023.12",
+                q_infectious: "您有传染病吗？", d_infectious: "为了安全，请务必告知。",
+                q_steroid: "您正在服用或注射类固醇吗？", d_steroid: "如果是长期使用，请勾选。",
+                q_endocarditis: "有心内膜炎史或人工心脏瓣膜吗？", d_endocarditis: "包括先天性心脏病。",
+                q_kidney: "正在透析或有严重肝病吗？", d_kidney: "肝硬化、终末期肾衰竭等。",
+                q_pregnancy: "您怀孕或可能怀孕了吗？", d_pregnancy: "包括哺乳期。",
+                q_other_meds: "请列出您正在服用的其他药物。",
+                btn_next: "下一步 (健康检查)", btn_result: "查看结果", btn_reset: "重置", btn_print: "打印", result_patient: "患者视图", result_doctor: "医生视图", safe: "可以治疗", caution: "需要咨询", danger: "需要注意",
+                msg_safe: "今天可以接受预定的治疗。", msg_caution: "经医生咨询后可安全进行治疗。", msg_danger: "为了安全，治疗可能会推迟。",
+                ai_title: "AI 牙科咨询", ai_desc: "关于您的状况，如有疑问请提问。", ai_placeholder: "请输入问题...", ai_btn: "提问", items_checked: "已选项目", none: "无", other: "其他", input_other: "请输入疾病名称",
+                privacyNotice: "您提供的信息仅用于您的安全牙科治疗，不会用于任何其他用途。",
+                disease_hbv: "HBV (乙肝)", disease_hcv: "HCV (丙肝)", disease_tb: "TB (结核)", disease_hiv: "HIV (艾滋病)", disease_other: "其他"
+            },
+            // ... (Other languages omitted for brevity, logic remains same) ...
+        };
+        // Fallback for missing languages
+        TRANSLATIONS.ja = TRANSLATIONS.en; TRANSLATIONS.vi = TRANSLATIONS.en; TRANSLATIONS.mn = TRANSLATIONS.en; TRANSLATIONS.ar = TRANSLATIONS.en;
+
+        const QUESTIONS = [
+            { id: 'hypertension', key: 'q_hypertension', detailKey: 'd_hypertension', category: 'cardio', hasInputs: true },
+            { id: 'heart_disease', key: 'q_heart', detailKey: 'd_heart', category: 'cardio', hasInputs: true }, 
+            { id: 'diabetes', key: 'q_diabetes', detailKey: 'd_diabetes', category: 'endocrine', hasInputs: true },
+            { id: 'anticoagulant', key: 'q_anticoagulant', detailKey: 'd_anticoagulant', category: 'medication' },
+            { id: 'bleeding_tendency', key: 'q_bleeding', detailKey: 'd_bleeding', category: 'medication' },
+            { id: 'osteoporosis', key: 'q_osteoporosis', detailKey: 'd_osteoporosis', category: 'medication', hasInputs: true }, 
+            { id: 'infectious', key: 'q_infectious', detailKey: 'd_infectious', category: 'other', hasInputs: true },
+            { id: 'steroid', key: 'q_steroid', detailKey: 'd_steroid', category: 'medication' }, 
+            { id: 'endocarditis', key: 'q_endocarditis', detailKey: 'd_endocarditis', category: 'cardio' },
+            { id: 'kidney_liver', key: 'q_kidney', detailKey: 'd_kidney', category: 'organ' },
+            { id: 'pregnancy', key: 'q_pregnancy', detailKey: 'd_pregnancy', category: 'other' }
+        ];
+
+        const analyzeCondition = (answers, lang) => {
+            let status = 'safe'; 
+            let patientMessage = TRANSLATIONS[lang].msg_safe;
+            let doctorNotes = [];
+            let riskLevel = 0;
+            const t = TRANSLATIONS[lang];
+
+            if (answers.basic_weight) {
+                const weight = parseFloat(answers.basic_weight);
+                const lidocainePerCartridge = 36; 
+                const maxDoseEpi = Math.min(weight * 7, 500);
+                const cartridgesEpi = (maxDoseEpi / lidocainePerCartridge).toFixed(1);
+                const maxDoseNoEpi = weight * 4.5;
+                const cartridgesNoEpi = (maxDoseNoEpi / lidocainePerCartridge).toFixed(1);
+                doctorNotes.push({
+                    type: 'info',
+                    title: '최대 국소마취제 용량 (Max Lidocaine Dosage)',
+                    content: `환자 체중: ${weight}kg\n[1] Epi 포함 (Max 7mg/kg): ${cartridgesEpi} ample\n[2] Epi 미포함 (Max 4.5mg/kg): ${cartridgesNoEpi} ample`
+                });
+            }
+
+            if (answers.habit_painful === 'yes') {
+                doctorNotes.push({type: 'warning', title: '통증 예민 주의', content: '이전 치료 시 심한 통증 호소. 충분한 마취 필요.'});
+            }
+            if (answers.habit_visit_freq && answers.habit_visit_freq !== 'periodic') {
+                doctorNotes.push({
+                    type: 'info', 
+                    title: '주기적 내원 필요 (Regular Check-up Needed)', 
+                    content: '내원 습관이 불규칙함. 정기 검진(6개월/1년) 및 예방 관리 유도 필요.'
+                });
+                if (status === 'safe') patientMessage += "\n(Tip: 증상이 없더라도 정기적인 치과 검진을 권장합니다!)";
+            }
+            const brushingCount = parseInt(answers.habit_brushing || 0);
+            if (brushingCount <= 1) {
+                doctorNotes.push({type: 'info', title: '구강 위생 교육 필요', content: `일일 양치 ${brushingCount}회.`});
+            }
+            if (answers.habit_floss === false) {
+                doctorNotes.push({type: 'info', title: '치실/치간칫솔 교육 필요', content: '보조 구강용품 미사용.'});
+                if (status === 'safe') patientMessage += "\n(Tip: 치실/치간칫솔 사용을 추천합니다!)";
+            }
+
+            if (answers.dental_anesthesia_allergy) {
+                status = 'danger';
+                patientMessage = lang==='ko'?'마취제 알러지 확인 필요':t.msg_danger;
+                doctorNotes.push({ type: 'critical', title: '리도카인 알러지 (Lidocaine Allergy)', content: '국소마취제 알러지 보유. 리도카인 금기.' });
+            }
+            if (answers.dental_extraction || answers.dental_anesthesia) {
+                const hx = [];
+                if (answers.dental_extraction) hx.push('발치(+)');
+                if (answers.dental_anesthesia) hx.push('마취(+)');
+                doctorNotes.push({ type: 'monitor', title: '치과 이력', content: hx.join(', ') });
+            }
+
+            if (answers.hypertension) {
+                riskLevel += 1;
+                const sys = parseInt(answers.bp_sys), dia = parseInt(answers.bp_dia);
+                let bpNote = '혈압 재확인 필수.';
+                let bpStatus = 'monitor';
+                if (sys || dia) {
+                    bpNote = `자가 측정: ${sys||'?'} / ${dia||'?'} mmHg. `;
+                    if (sys >= 160 || dia >= 100) { bpStatus = 'danger'; status = 'danger'; bpNote += 'Stage 2 HTN. 연기 권고.'; patientMessage = t.msg_danger; }
+                    else if (sys >= 140 || dia >= 90) { bpStatus = 'warning'; if (status !== 'danger') status = 'caution'; bpNote += 'Stage 1 HTN.'; if (status !== 'danger') patientMessage = t.msg_caution; }
+                }
+                doctorNotes.push({type: bpStatus, title: '고혈압', content: bpNote});
+            }
+
+            if (answers.heart_disease) {
+                riskLevel += 1;
+                let hStatus = 'warning';
+                let hContent = '심장 질환 병력 확인.';
+                if (answers.heart_symptom_6mo) {
+                    hStatus = 'critical';
+                    status = 'danger';
+                    patientMessage = t.msg_danger;
+                    hContent = '!!주의!! (Unstable/Recent History). 최근 6개월 내 증상 있음. 불안정 협심증/MI 등 의심. 응급상황 대비 및 내과 의뢰 필수.';
+                }
+                doctorNotes.push({type: hStatus, title: '심장 질환 (Heart Disease)', content: hContent});
+            }
+
+            if (answers.diabetes) {
+                riskLevel += 1;
+                const bsl = parseInt(answers.bs_level), isHigh = answers.bs_high_symptom, isLow = answers.bs_low_symptom;
+                let dmNote = '저혈당 주의.';
+                let dmStatus = 'monitor';
+                if ((bsl >= 200) || isHigh) { dmStatus = 'warning'; if(status!=='danger') status='caution'; dmNote += ' 고혈당(>200).'; }
+                else if ((bsl > 0 && bsl < 70) || isLow) { dmStatus = 'danger'; status='danger'; dmNote += ' 저혈당(<70) 위험.'; patientMessage = t.msg_danger; }
+                doctorNotes.push({type: dmStatus, title: '당뇨', content: dmNote});
+            }
+
+            if (answers.anticoagulant) {
+                if(status!=='danger') status='caution';
+                patientMessage = t.msg_caution;
+                doctorNotes.push({type: 'warning', title: '항혈전제', content: '지혈 주의. 와파린 INR 확인.'});
+            }
+
+            if (answers.bleeding_tendency) {
+                status = 'danger'; patientMessage = t.msg_danger;
+                doctorNotes.push({type: 'critical', title: '출혈 소인', content: '지혈 지연 병력. 혈액검사 필수.'});
+            }
+
+            if (answers.osteoporosis) {
+                let osteoStatus = 'warning';
+                let osteoContent = '골다공증 약물 복용.';
+                if (answers.osteoporosis_type === 'injection') {
+                    osteoStatus = 'danger';
+                    status = 'danger';
+                    patientMessage = t.msg_danger;
+                    osteoContent = 'BRONJ 고위험 (주사제/Injection). 발치/임플란트 시 골괴사 위험 매우 높음. 휴약기 및 전문의 협진 필수.';
+                } else {
+                    if(status!=='danger') status='caution';
+                    osteoContent += ' (경구약). BRONJ 위험성 고지.';
+                }
+                if (answers.osteoporosis_date) {
+                    osteoContent += ` (최근 투약: ${answers.osteoporosis_date})`;
+                }
+                doctorNotes.push({type: osteoStatus, title: '골다공증 (Osteoporosis)', content: osteoContent});
+            }
+
+            if (answers.infectious) {
+                riskLevel += 1;
+                if (status === 'safe') status = 'caution';
+                let infDetails = [];
+                if (answers.infectious_hbv) infDetails.push(t.disease_hbv);
+                if (answers.infectious_hcv) infDetails.push(t.disease_hcv);
+                if (answers.infectious_tb) infDetails.push(t.disease_tb);
+                if (answers.infectious_hiv) infDetails.push(t.disease_hiv);
+                if (answers.infectious_other) infDetails.push(`${t.disease_other}(${answers.infectious_other_text || '?'})`);
+                
+                let infNote = `감염성 질환: ${infDetails.join(', ') || '미선택'}. `;
+                if (answers.infectious_tb) { status = 'danger'; infNote += '[결핵] 활동성 확인 필수. '; patientMessage = t.msg_danger; }
+                infNote += 'Standard Precaution.';
+                doctorNotes.push({ type: answers.infectious_tb ? 'danger' : 'warning', title: '감염성 질환', content: infNote });
+            }
+
+            if (answers.steroid) {
+                doctorNotes.push({type: 'warning', title: '스테로이드 (Steroid)', content: '감염 주의 (Infection Risk). 면역 억제 가능성. 술 후 감염 관리 및 스트레스 고려.'});
+            }
+
+            if (answers.endocarditis) { status='danger'; patientMessage = t.msg_danger; doctorNotes.push({type: 'critical', title: '심내막염 고위험', content: '예방적 항생제 필수.'}); }
+            if (answers.kidney_liver) { status='danger'; patientMessage = t.msg_danger; doctorNotes.push({type: 'warning', title: '신장/간 기능', content: '약물 대사/지혈 주의.'}); }
+            if (answers.pregnancy) { if(status!=='danger') status='caution'; patientMessage = t.msg_caution; doctorNotes.push({type: 'monitor', title: '임신부', content: '2기 안전. 약물 금기.'}); }
+
+            if (answers.other_meds) {
+                doctorNotes.push({type: 'info', title: '기타 복용 약물', content: answers.other_meds});
+            }
+
+            if (status === 'safe' && riskLevel > 0) status = 'caution';
+            return { status, patientMessage, doctorNotes, riskLevel };
+        };
+
+        async function callGemini(systemPrompt, userPrompt, key) {
+            if (!key) throw new Error("API Key Missing");
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`;
+            const payload = { contents: [{ parts: [{ text: userPrompt }] }], systemInstruction: { parts: [{ text: systemPrompt }] } };
+            const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if (!res.ok) throw new Error("API Error");
+            const data = await res.json();
+            return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response.";
+        }
+
+        // --- Desktop Sidebar Component ---
+        const Steps = [
+            { id: 'basic_info', icon: Icons.Scale, label: '기본 정보' },
+            { id: 'dental_habits', icon: Icons.Brush, label: '구강 습관' },
+            { id: 'dental_history', icon: Icons.Tooth, label: '치과 이력' },
+            { id: 'survey', icon: Icons.Stethoscope, label: '전신 질환' },
+            { id: 'result', icon: Icons.FileText, label: '검사 결과' },
+        ];
+
+        const Sidebar = ({ currentStep, lang }) => (
+            <div className="w-full md:w-64 bg-blue-600 text-white p-6 flex flex-col justify-between shrink-0">
+                <div>
+                    <div className="flex items-center gap-2 mb-8">
+                        <div className="bg-white/20 p-2 rounded-lg">
+                            <Icons.ShieldAlert size={28} />
+                        </div>
+                        <div>
+                            <h1 className="font-bold text-lg leading-tight">Dental<br/>Safe Check</h1>
+                        </div>
+                    </div>
+                    <nav className="space-y-2 hidden md:block">
+                        {Steps.map((s, i) => {
+                            const isActive = currentStep === s.id;
+                            const stepIndex = Steps.findIndex(x => x.id === s.id);
+                            const currentIndex = Steps.findIndex(x => x.id === currentStep);
+                            const isPassed = stepIndex < currentIndex;
+
+                            return (
+                                <div key={s.id} className={`flex items-center gap-3 p-3 rounded-lg transition-all ${isActive ? 'bg-white text-blue-700 font-bold shadow-md' : 'text-blue-100 hover:bg-blue-500'}`}>
+                                    <div className={`${isActive?'':'opacity-70'}`}><s.icon size={20}/></div>
+                                    <span className="text-sm">{s.label}</span>
+                                    {isPassed && <Icons.CheckCircle size={16} className="ml-auto opacity-50"/>}
+                                </div>
+                            );
+                        })}
+                    </nav>
+                </div>
+                <div className="text-xs text-blue-200 mt-4 md:mt-0">
+                    Language: {lang.toUpperCase()}
+                </div>
+            </div>
+        );
+
+        function DentalScreeningApp() {
+            const [answers, setAnswers] = useState(() => {
+                try {
+                    const saved = sessionStorage.getItem('dentalSafeCheck_answers');
+                    return saved ? JSON.parse(saved) : {};
+                } catch (e) { return {}; }
+            });
+            const [lang, setLang] = useState('ko');
+            const [step, setStep] = useState('lang_select'); 
+            const [viewMode, setViewMode] = useState('patient');
+            const [localApiKey, setLocalApiKey] = useState(apiKey || localStorage.getItem('gemini_api_key') || '');
+            const [showSettings, setShowSettings] = useState(false);
+            const [aiLoading, setAiLoading] = useState(false);
+            const [aiResult, setAiResult] = useState('');
+            const [patientQuestion, setPatientQuestion] = useState('');
+            const [aiError, setAiError] = useState('');
+
+            useEffect(() => {
+                sessionStorage.setItem('dentalSafeCheck_answers', JSON.stringify(answers));
+            }, [answers]);
+
+            useEffect(() => {
+                const contentArea = document.getElementById('content-area');
+                if(contentArea) contentArea.scrollTo({ top: 0, behavior: 'smooth' });
+            }, [step]);
+
+            const t = TRANSLATIONS[lang];
+
+            const handleAnswer = (id, value) => {
+                setAnswers(prev => {
+                    const next = { ...prev, [id]: value };
+                    if (!value) {
+                        if (id === 'hypertension') { delete next.bp_sys; delete next.bp_dia; }
+                        if (id === 'heart_disease') { delete next.heart_symptom_6mo; }
+                        if (id === 'diabetes') { delete next.bs_level; delete next.bs_high_symptom; delete next.bs_low_symptom; }
+                        if (id === 'osteoporosis') { delete next.osteoporosis_type; delete next.osteoporosis_date; }
+                        if (id === 'infectious') { delete next.infectious_hbv; delete next.infectious_hcv; delete next.infectious_tb; delete next.infectious_hiv; delete next.infectious_other; delete next.infectious_other_text; }
+                        if (id === 'dental_anesthesia') { delete next.dental_anesthesia_allergy; }
+                    }
+                    return next;
+                });
+            };
+            const handleValueChange = (key, val) => setAnswers(p => ({...p, [key]: val}));
+            
+            const resetApp = () => { 
+                setAnswers({}); 
+                sessionStorage.removeItem('dentalSafeCheck_answers'); 
+                setStep('lang_select'); 
+                setViewMode('patient'); 
+                setAiResult(''); 
+                setPatientQuestion(''); 
+            };
+            
+            const result = useMemo(() => analyzeCondition(answers, lang), [answers, lang]);
+            
+            const handleBack = () => {
+                if (step === 'intro') setStep('lang_select');
+                else if (step === 'basic_info') setStep('intro');
+                else if (step === 'dental_habits') setStep('basic_info');
+                else if (step === 'dental_history') setStep('dental_habits');
+                else if (step === 'survey') setStep('dental_history');
+                else if (step === 'result') setStep('survey');
+            };
+            
+            const handleNext = () => setStep('result');
+
+            const basicAnswered = answers.basic_gender && answers.basic_age && answers.basic_weight;
+            const habitAnswered = answers.habit_visit_freq && answers.habit_painful && answers.habit_brushing && answers.habit_floss !== undefined;
+            const dentalAnswered = answers.dental_extraction !== undefined && answers.dental_anesthesia !== undefined && (answers.dental_anesthesia === false || answers.dental_anesthesia_allergy !== undefined);
+            const medicalAnswered = QUESTIONS.every(q => {
+                if (q.id === 'heart_disease' && answers.heart_disease) return answers.heart_symptom_6mo !== undefined;
+                if (q.id === 'osteoporosis' && answers.osteoporosis) return answers.osteoporosis_type !== undefined;
+                return answers[q.id] !== undefined;
+            });
+
+            const askPatientAI = async () => {
+                if (!patientQuestion.trim()) return;
+                if (!localApiKey) { setShowSettings(true); return; }
+                setAiLoading(true); setAiResult(''); setAiError('');
+                const conditionSummary = QUESTIONS.filter(q => answers[q.id]).map(q => t[q.key]).join(", ");
+                const sysPrompt = `Act as Dental Receptionist AI. Lang: ${lang}. Patient: ${conditionSummary}. Status: ${result.status}. Answer simple/polite in ${lang}.`;
+                try { const text = await callGemini(sysPrompt, patientQuestion, localApiKey); setAiResult(text); } catch (e) { setAiError("Error"); } finally { setAiLoading(false); }
+            };
+            const generateReferralLetter = async () => {
+                if (!localApiKey) { setShowSettings(true); return; }
+                setAiLoading(true); setAiResult('');
+                const sysPrompt = `Act as Dentist. Write referral letter (Korean) to Physician. Risks: ${JSON.stringify(result.doctorNotes)}.`;
+                try { const text = await callGemini(sysPrompt, "Write Letter", localApiKey); setAiResult(text); } catch (e) { setAiError("Error"); } finally { setAiLoading(false); }
+            };
+
+            const fontClass = lang === 'zh' ? 'lang-sc' : lang === 'ja' ? 'lang-jp' : lang === 'ar' ? 'lang-ar' : '';
+
+            // Print Layout
+            const PrintLayout = () => {
+                const mapVisit = { 'pain': '아플 때만', 'uncomfortable': '불편할 때', 'periodic': '정기적' };
+                const mapPain = { 'yes': '심함', 'no': '없음/보통' };
+                const mapFloss = { true: '사용', false: '미사용' };
+                const today = new Date().toLocaleDateString();
+
+                return (
+                    <div className="print-only">
+                        <div className="border-b-2 border-black pb-4 mb-4">
+                            <h1 className="text-3xl font-bold text-center mb-2">치과 진료 전 환자 안전 점검표</h1>
+                            <div className="text-center text-xs text-gray-500 mb-6">Patient Safety Check Report for Dental Treatment</div>
+                            <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                                <div className="flex border-b border-gray-300 pb-1"><span className="font-bold w-24">성명 (Name):</span><span className="flex-1"></span></div>
+                                <div className="flex border-b border-gray-300 pb-1"><span className="font-bold w-24">차트 번호:</span><span className="flex-1"></span></div>
+                                <div className="flex border-b border-gray-300 pb-1"><span className="font-bold w-24">생년월일:</span><span className="flex-1"></span></div>
+                                <div className="flex border-b border-gray-300 pb-1"><span className="font-bold w-24">작성일자:</span><span className="flex-1">{today}</span></div>
+                                <div className="flex border-b border-gray-300 pb-1"><span className="font-bold w-24">신체 정보:</span><span className="flex-1">{answers.basic_gender==='male'?'남성':'여성'} / {answers.basic_age}세 / {answers.basic_weight}kg</span></div>
+                            </div>
+                        </div>
+                        <div className="mb-6 p-4 border border-black rounded-lg">
+                            <h2 className="font-bold border-b border-black pb-2 mb-2">1. 종합 분석 결과 (Clinical Summary)</h2>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <span className="font-bold text-sm block">안전 등급 (Safety Level):</span>
+                                    <span className={`text-xl font-bold ${result.status==='safe'?'':'underline'}`}>
+                                        {result.status.toUpperCase()} ({result.status==='safe'?'안전':'주의/위험'})
+                                    </span>
+                                </div>
+                                <div>
+                                    <span className="font-bold text-sm block">작성 언어:</span>
+                                    <span>{lang.toUpperCase()}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="mb-6">
+                            <h2 className="font-bold text-lg mb-2">2. 임상 주의사항 (Medical Alerts)</h2>
+                            {result.doctorNotes.length === 0 ? (
+                                <div className="p-4 border border-dashed border-gray-400 text-center text-gray-500">특이사항 없음 (Nonspecific)</div>
+                            ) : (
+                                <table className="w-full">
+                                    <thead><tr><th style={{width:'15%'}}>구분</th><th>내용 (Clinical Note)</th></tr></thead>
+                                    <tbody>
+                                        {result.doctorNotes.map((n, i) => (
+                                            <tr key={i}>
+                                                <td className="font-bold text-center">{n.title}</td>
+                                                <td>{n.content}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+                        <div className="mb-6">
+                            <h2 className="font-bold text-lg mb-2">3. 상세 문진 내역 (Detailed History)</h2>
+                            <table className="w-full mb-4">
+                                <tbody>
+                                    <tr>
+                                        <th style={{width:'20%'}}>구강 습관</th>
+                                        <td>
+                                            방문: {mapVisit[answers.habit_visit_freq]} | 
+                                            과거통증: {mapPain[answers.habit_painful]} | 
+                                            양치: {answers.habit_brushing}회/일 | 
+                                            보조용품: {mapFloss[answers.habit_floss]}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>치과 이력</th>
+                                        <td>
+                                            발치경험: {answers.dental_extraction?'있음':'없음'} | 
+                                            마취경험: {answers.dental_anesthesia?'있음':'없음'}
+                                            {answers.dental_anesthesia && ` (알러지: ${answers.dental_anesthesia_allergy?'있음':'없음'})`}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>전신 질환</th>
+                                        <td>
+                                            {QUESTIONS.filter(q => answers[q.id]).length === 0 ? '특이사항 없음' : (
+                                                <div className="grid grid-cols-2 gap-1">
+                                                    {answers.hypertension && <div>• 고혈압 ({answers.bp_sys}/{answers.bp_dia})</div>}
+                                                    {answers.heart_disease && <div>• 심장질환 (증상: {answers.heart_symptom_6mo?'유':'무'})</div>}
+                                                    {answers.diabetes && <div>• 당뇨 (BST: {answers.bs_level})</div>}
+                                                    {answers.anticoagulant && <div>• 항혈전제 복용</div>}
+                                                    {answers.bleeding_tendency && <div>• 출혈 소인</div>}
+                                                    {answers.osteoporosis && <div>• 골다공증 ({answers.osteoporosis_type==='injection'?'주사':'경구'}) (투약시기: {answers.osteoporosis_date || '-'})</div>}
+                                                    {answers.infectious && <div>• 감염성 질환</div>}
+                                                    {answers.steroid && <div>• 스테로이드</div>}
+                                                    {answers.endocarditis && <div>• 심내막염</div>}
+                                                    {answers.kidney_liver && <div>• 신장/간 질환</div>}
+                                                    {answers.pregnancy && <div>• 임신 가능성</div>}
+                                                </div>
+                                            )}
+                                        </td>
+                                    </tr>
+                                    {answers.other_meds && (
+                                        <tr>
+                                            <th>기타 약물</th>
+                                            <td>{answers.other_meds}</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className="mt-12 flex justify-end gap-12">
+                            <div className="text-right">
+                                <p className="mb-6">상기 내용은 사실과 다름없음을 확인합니다.</p>
+                                <div className="flex gap-4 items-end"><span>환자 서명:</span><span className="w-32 border-b border-black"></span></div>
+                            </div>
+                            <div className="text-right">
+                                <p className="mb-6 text-transparent">.</p>
+                                <div className="flex gap-4 items-end"><span>담당의 확인:</span><span className="w-32 border-b border-black"></span></div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            return (
+                // --- 수정된 부분: React Fragment로 감싸서 PrintLayout을 독립시킴 ---
+                <>
+                    {step === 'result' && <PrintLayout />}
+                    <div className={`desktop-layout w-full max-w-5xl bg-white rounded-2xl shadow-2xl overflow-hidden flex md:flex-row flex-col min-h-[600px] ${fontClass}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+                        {/* Sidebar */}
+                        {step !== 'lang_select' && step !== 'intro' && <Sidebar currentStep={step} lang={lang} />}
+
+                        {/* Main Content Area */}
+                        <div id="content-area" className="flex-1 flex flex-col relative overflow-y-auto h-[800px] md:h-[700px]">
+                            
+                            {/* Settings Button */}
+                            {step !== 'lang_select' && (
+                                <div className="absolute top-4 right-4 z-10 no-print flex gap-2">
+                                    {step === 'result' && <button onClick={()=>window.print()} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-600" title="Print"><Icons.Printer size={20}/></button>}
+                                    <button onClick={resetApp} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-600" title="Reset"><Icons.RefreshCcw size={20}/></button>
+                                    <button onClick={()=>setShowSettings(!showSettings)} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-600" title="Settings"><Icons.Settings size={20}/></button>
+                                </div>
+                            )}
+
+                            {/* Settings Modal */}
+                            {showSettings && (
+                                <div className="absolute inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                                    <div className="bg-white p-6 rounded-xl w-full max-w-sm shadow-2xl">
+                                        <h3 className="font-bold mb-2">API Key Settings</h3>
+                                        <input type="password" value={localApiKey} onChange={e=>setLocalApiKey(e.target.value)} className="w-full p-2 border rounded mb-4" placeholder="Enter Gemini API Key"/>
+                                        <div className="flex gap-2">
+                                            <button onClick={()=>setShowSettings(false)} className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Save</button>
+                                            <button onClick={()=>setShowSettings(false)} className="flex-1 bg-slate-200 text-slate-700 py-2 rounded hover:bg-slate-300">Close</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="p-8 md:p-12 pb-24 no-print flex-1">
+                                {/* 0. Lang Select */}
+                                {step === 'lang_select' && (
+                                    <div className="flex flex-col items-center justify-center h-full space-y-8 animate-fadeIn">
+                                        <div className="text-center">
+                                            <div className="inline-block p-6 bg-blue-50 rounded-full mb-6"><Icons.Globe className="w-20 h-20 text-blue-600"/></div>
+                                            <h2 className="text-3xl font-bold text-slate-800">Select Language</h2>
+                                            <p className="text-slate-500 mt-2">Please choose your preferred language to start.</p>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-lg">
+                                            {[{c:'ko',l:'🇰🇷 한국어'},{c:'en',l:'🇺🇸 English'},{c:'zh',l:'🇨🇳 中文'},{c:'ja',l:'🇯🇵 日本語'},{c:'vi',l:'🇻🇳 Tiếng Việt'},{c:'mn',l:'🇲🇳 Монгол хэл'},{c:'ar',l:'🇸🇦 العربية'}].map(o=>
+                                                <button key={o.c} onClick={()=>{setLang(o.c);setStep('intro');}} className="py-4 px-6 border border-slate-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 font-bold text-lg transition-all text-left flex items-center gap-3 bg-white shadow-sm">
+                                                    <span>{o.l}</span>
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* 1. Intro */}
+                                {step === 'intro' && (
+                                    <div className="flex flex-col items-center justify-center h-full text-center space-y-8 animate-fadeIn max-w-2xl mx-auto">
+                                        <div className="bg-blue-50 p-8 rounded-full shadow-inner"><Icons.ShieldAlert className="h-24 w-24 text-blue-600"/></div>
+                                        <div><h2 className="text-3xl font-bold mb-3 text-slate-900">{t.title}</h2><p className="text-xl text-slate-500">{t.subtitle}</p></div>
+                                        <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-sm text-slate-600 flex gap-3 text-left w-full"><Icons.Lock size={20} className="shrink-0 mt-0.5 text-slate-400"/><span>{t.privacyNotice}</span></div>
+                                        <button onClick={()=>setStep('basic_info')} className="w-full md:w-auto px-12 bg-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-blue-700 hover:scale-105 transition-all">{t.startBtn}</button>
+                                    </div>
+                                )}
+
+                                {/* Steps Content */}
+                                {step === 'basic_info' && (
+                                    <div className="space-y-8 animate-fadeIn max-w-3xl mx-auto">
+                                        <div><h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><Icons.Scale className="text-blue-600"/> {t.basicInfoTitle}</h2><p className="text-slate-500">{t.basicInfoDesc}</p></div>
+                                        <div className="bg-white border rounded-2xl p-8 shadow-sm space-y-6">
+                                            <div><label className="block text-sm font-bold mb-3 text-slate-700">{t.label_gender}</label>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <button onClick={()=>handleValueChange('basic_gender','male')} className={`py-4 rounded-xl font-semibold transition-all border-2 ${answers.basic_gender==='male'?'border-blue-600 bg-blue-50 text-blue-700':'border-transparent bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>{t.gender_male}</button>
+                                                    <button onClick={()=>handleValueChange('basic_gender','female')} className={`py-4 rounded-xl font-semibold transition-all border-2 ${answers.basic_gender==='female'?'border-pink-500 bg-pink-50 text-pink-700':'border-transparent bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>{t.gender_female}</button>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div><label className="block text-sm font-bold mb-2 text-slate-700">{t.label_age}</label><input type="number" min="0" placeholder={t.placeholder_age} value={answers.basic_age||''} onChange={e=>handleValueChange('basic_age',e.target.value)} className="w-full p-4 border rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"/></div>
+                                                <div><label className="block text-sm font-bold mb-2 text-slate-700">{t.label_weight}</label><input type="number" min="0" placeholder={t.placeholder_weight} value={answers.basic_weight||''} onChange={e=>handleValueChange('basic_weight',e.target.value)} className="w-full p-4 border rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"/></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {step === 'dental_habits' && (
+                                    <div className="space-y-8 animate-fadeIn max-w-3xl mx-auto">
+                                        <div><h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><Icons.Brush className="text-blue-600"/> {t.habitInfoTitle}</h2><p className="text-slate-500">{t.habitInfoDesc}</p></div>
+                                        <div className="grid grid-cols-1 gap-6">
+                                            <div className="bg-white border rounded-2xl p-6 shadow-sm">
+                                                <h3 className="font-bold mb-4 text-lg">{t.q_visit_freq}</h3>
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">{['pain','uncomfortable','periodic'].map(o=><button key={o} onClick={()=>handleValueChange('habit_visit_freq',o)} className={`py-3 px-4 rounded-lg text-center text-sm border-2 transition-all ${answers.habit_visit_freq===o?'border-blue-500 bg-blue-50 text-blue-700 font-bold':'border-slate-100 hover:border-blue-200'}`}>{t[`opt_visit_${o}`]}</button>)}</div>
+                                            </div>
+                                            <div className="bg-white border rounded-2xl p-6 shadow-sm">
+                                                <h3 className="font-bold mb-4 text-lg">{t.q_prev_discomfort}</h3>
+                                                <div className="grid grid-cols-2 gap-4"><button onClick={()=>handleValueChange('habit_painful','yes')} className={`py-4 rounded-xl font-semibold border-2 ${answers.habit_painful==='yes'?'border-red-500 bg-red-50 text-red-700':'border-slate-100 hover:bg-slate-50'}`}>{t.opt_painful}</button><button onClick={()=>handleValueChange('habit_painful','no')} className={`py-4 rounded-xl font-semibold border-2 ${answers.habit_painful==='no'?'border-blue-500 bg-blue-50 text-blue-700':'border-slate-100 hover:bg-slate-50'}`}>{t.opt_okay}</button></div>
+                                            </div>
+                                            <div className="bg-white border rounded-2xl p-6 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                <div><h3 className="font-bold mb-3">{t.q_brushing}</h3><input type="number" min="0" placeholder="3" value={answers.habit_brushing||''} onChange={e=>handleValueChange('habit_brushing',e.target.value)} className="w-full p-3 border rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"/></div>
+                                                <div><h3 className="font-bold mb-3">{t.q_floss}</h3><div className="grid grid-cols-2 gap-3"><button onClick={()=>handleValueChange('habit_floss',true)} className={`py-3 rounded-xl border-2 ${answers.habit_floss===true?'border-green-500 bg-green-50 text-green-700 font-bold':'border-slate-100 hover:bg-slate-50'}`}>{t.yes}</button><button onClick={()=>handleValueChange('habit_floss',false)} className={`py-3 rounded-xl border-2 ${answers.habit_floss===false?'border-slate-400 bg-slate-100 text-slate-600 font-bold':'border-slate-100 hover:bg-slate-50'}`}>{t.no}</button></div></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {step === 'dental_history' && (
+                                    <div className="space-y-8 animate-fadeIn max-w-3xl mx-auto">
+                                        <div><h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><Icons.Tooth className="text-blue-600"/> {t.dentalHistoryTitle}</h2><p className="text-slate-500">{t.dentalHistoryDesc}</p></div>
+                                        <div className="grid grid-cols-1 gap-6">
+                                            <div className="bg-white border rounded-2xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                                <h3 className="font-bold text-lg md:w-1/2">{t.q_extraction}</h3>
+                                                <div className="grid grid-cols-2 gap-3 w-full md:w-1/2"><button onClick={()=>handleAnswer('dental_extraction',true)} className={`py-3 rounded-xl border-2 ${answers.dental_extraction===true?'border-blue-600 bg-blue-50 text-blue-700 font-bold':'border-slate-100'}`}>{t.yes}</button><button onClick={()=>handleAnswer('dental_extraction',false)} className={`py-3 rounded-xl border-2 ${answers.dental_extraction===false?'border-slate-400 bg-slate-100 text-slate-600':'border-slate-100'}`}>{t.no}</button></div>
+                                            </div>
+                                            <div className="bg-white border rounded-2xl p-6 shadow-sm">
+                                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                                                    <h3 className="font-bold text-lg md:w-1/2">{t.q_anesthesia}</h3>
+                                                    <div className="grid grid-cols-2 gap-3 w-full md:w-1/2"><button onClick={()=>handleAnswer('dental_anesthesia',true)} className={`py-3 rounded-xl border-2 ${answers.dental_anesthesia===true?'border-blue-600 bg-blue-50 text-blue-700 font-bold':'border-slate-100'}`}>{t.yes}</button><button onClick={()=>handleAnswer('dental_anesthesia',false)} className={`py-3 rounded-xl border-2 ${answers.dental_anesthesia===false?'border-slate-400 bg-slate-100 text-slate-600':'border-slate-100'}`}>{t.no}</button></div>
+                                                </div>
+                                                {answers.dental_anesthesia && (<div className="mt-4 pt-4 border-t animate-fadeIn bg-red-50 p-4 rounded-xl border border-red-100"><h3 className="font-bold text-red-700 mb-1">{t.q_allergy}</h3><p className="text-xs text-red-500 mb-3">{t.q_allergy_detail}</p><div className="grid grid-cols-2 gap-3"><button onClick={()=>handleAnswer('dental_anesthesia_allergy',true)} className={`py-3 rounded-xl border-2 ${answers.dental_anesthesia_allergy===true?'border-red-600 bg-white text-red-600 font-bold':'border-red-200 bg-white text-slate-500'}`}>{t.yes_had}</button><button onClick={()=>handleAnswer('dental_anesthesia_allergy',false)} className={`py-3 rounded-xl border-2 ${answers.dental_anesthesia_allergy===false?'border-slate-400 bg-slate-200 text-slate-600':'border-red-200 bg-white text-slate-500'}`}>{t.no}</button></div></div>)}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {step === 'survey' && (
+                                    <div className="space-y-8 animate-fadeIn max-w-4xl mx-auto">
+                                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-r-xl"><h2 className="text-xl font-bold text-yellow-800 flex items-center gap-2"><Icons.Stethoscope size={24}/> {t.medHistoryTitle}</h2><p className="text-yellow-700 mt-1">{t.medHistoryDesc}</p></div>
+                                        <div className="grid grid-cols-1 gap-4">
+                                            {QUESTIONS.map(q => (
+                                                <div key={q.id} className="bg-white border rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                                                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                                                        <div className="flex gap-4 md:w-2/3">
+                                                            <div className="p-3 bg-slate-50 rounded-xl h-fit">
+                                                                {q.category==='cardio'?<Icons.HeartPulse className="text-red-500"/>:q.category==='medication'?<Icons.Pill className="text-green-500"/>:q.category==='endocrine'?<Icons.Activity className="text-orange-500"/>:<Icons.Syringe className="text-purple-500"/>}
+                                                            </div>
+                                                            <div><h3 className="font-bold text-lg">{t[q.key]}</h3><p className="text-sm text-slate-500 mt-1">{t[q.detailKey]}</p></div>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-3 md:w-1/3 min-w-[200px]">
+                                                            <button onClick={()=>handleAnswer(q.id,true)} className={`py-3 rounded-xl border-2 ${answers[q.id]===true?'border-blue-600 bg-blue-50 text-blue-700 font-bold':'border-slate-100 hover:bg-slate-50'}`}>{t.yes}</button>
+                                                            <button onClick={()=>handleAnswer(q.id,false)} className={`py-3 rounded-xl border-2 ${answers[q.id]===false?'border-slate-400 bg-slate-100 text-slate-600':'border-slate-100 hover:bg-slate-50'}`}>{t.no}</button>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {/* Sub Inputs */}
+                                                    {answers[q.id] && (
+                                                        <div className="mt-4 pl-4 md:pl-16 pt-4 border-t border-dashed animate-fadeIn">
+                                                            {q.id==='hypertension' && (
+                                                                <div><p className="text-sm font-bold text-blue-800 mb-2">{t.placeholder_bp}</p><div className="flex gap-2 items-center"><input type="number" placeholder="120" value={answers.bp_sys||''} onChange={e=>handleValueChange('bp_sys',e.target.value)} className="w-24 p-2 border rounded-lg text-center"/> <span className="text-xl">/</span> <input type="number" placeholder="80" value={answers.bp_dia||''} onChange={e=>handleValueChange('bp_dia',e.target.value)} className="w-24 p-2 border rounded-lg text-center"/><span className="text-slate-500 ml-2">mmHg</span></div></div>
+                                                            )}
+                                                            {q.id==='heart_disease' && (
+                                                                <div><p className="text-sm font-bold text-red-800 mb-2">{t.q_heart_symptom}</p><div className="grid grid-cols-2 gap-2 max-w-xs"><button onClick={()=>handleValueChange('heart_symptom_6mo',true)} className={`p-2 border rounded text-sm ${answers.heart_symptom_6mo===true?'bg-red-100 border-red-500 text-red-700 font-bold':''}`}>{t.yes}</button><button onClick={()=>handleValueChange('heart_symptom_6mo',false)} className={`p-2 border rounded text-sm ${answers.heart_symptom_6mo===false?'bg-slate-200 text-slate-700':''}`}>{t.no}</button></div></div>
+                                                            )}
+                                                            {q.id==='diabetes' && (
+                                                                <div>
+                                                                    <p className="text-sm font-bold text-orange-800 mb-2">{t.placeholder_bs}</p>
+                                                                    <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                                                                        <input type="number" placeholder="mg/dL" value={answers.bs_level||''} onChange={e=>handleValueChange('bs_level',e.target.value)} className="w-full md:w-32 p-2 border rounded-lg"/>
+                                                                        <div className="flex gap-2">
+                                                                            <button onClick={()=>handleValueChange('bs_high_symptom',!answers.bs_high_symptom)} className={`px-3 py-2 border rounded-lg text-sm transition-colors ${answers.bs_high_symptom?'bg-orange-100 border-orange-500 text-orange-700 font-bold':'hover:bg-slate-50'}`}>{t.lbl_high_sugar}</button>
+                                                                            <button onClick={()=>handleValueChange('bs_low_symptom',!answers.bs_low_symptom)} className={`px-3 py-2 border rounded-lg text-sm transition-colors ${answers.bs_low_symptom?'bg-red-100 border-red-500 text-red-700 font-bold':'hover:bg-slate-50'}`}>{t.lbl_low_sugar}</button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                            {q.id==='osteoporosis' && (
+                                                                <div>
+                                                                    <p className="text-sm font-bold text-slate-800 mb-2">{t.q_osteo_type}</p>
+                                                                    <div className="grid grid-cols-2 gap-2 max-w-sm mb-4">
+                                                                        <button onClick={()=>handleValueChange('osteoporosis_type','oral')} className={`p-2 border rounded-lg text-sm ${answers.osteoporosis_type==='oral'?'bg-blue-100 border-blue-500 font-bold':''}`}>{t.opt_oral}</button>
+                                                                        <button onClick={()=>handleValueChange('osteoporosis_type','injection')} className={`p-2 border rounded-lg text-sm ${answers.osteoporosis_type==='injection'?'bg-red-100 border-red-500 text-red-700 font-bold':''}`}>{t.opt_inject}</button>
+                                                                    </div>
+                                                                    <p className="text-sm font-bold text-slate-800 mb-2">{t.q_osteo_date}</p>
+                                                                    <input type="text" placeholder={t.placeholder_date} value={answers.osteoporosis_date||''} onChange={e=>handleValueChange('osteoporosis_date',e.target.value)} className="w-full max-w-sm p-2 border rounded-lg"/>
+                                                                </div>
+                                                            )}
+                                                            {q.id==='infectious' && (
+                                                                <div><p className="text-sm font-bold text-orange-800 mb-2">{t.placeholder_infectious}</p><div className="grid grid-cols-1 md:grid-cols-2 gap-2">{['hbv','hcv','tb','hiv','other'].map(k=><div key={k}><label className="flex items-center gap-2 p-2 border rounded-lg hover:bg-slate-50 cursor-pointer"><input type="checkbox" checked={answers[`infectious_${k}`]||false} onChange={e=>handleValueChange(`infectious_${k}`,e.target.checked)} className="w-5 h-5 accent-orange-500"/><span>{t[`disease_${k}`]}</span></label>{k==='other'&&answers.infectious_other&&( <input type="text" placeholder={t.input_other} value={answers.infectious_other_text||''} onChange={e=>handleValueChange('infectious_other_text',e.target.value)} className="w-full mt-2 p-2 border rounded text-sm"/>)}</div>)}</div></div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                            {/* Other Meds Input */}
+                                            <div className="bg-white border rounded-2xl p-6 shadow-sm mt-4">
+                                                <h3 className="font-bold text-lg mb-2">{t.q_other_meds}</h3>
+                                                <textarea value={answers.other_meds||''} onChange={e=>handleValueChange('other_meds',e.target.value)} className="w-full p-4 border rounded-xl h-24 resize-none bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder={t.input_other}></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {step === 'result' && (
+                                    <div className="animate-fadeIn space-y-6 max-w-4xl mx-auto">
+                                        <div className="flex bg-slate-200 p-1 rounded-xl mb-6">
+                                            <button onClick={()=>{setViewMode('patient');setAiResult('');}} className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all ${viewMode==='patient'?'bg-white text-blue-600 shadow-sm':'text-slate-500 hover:text-slate-700'}`}><Icons.User size={18} className="inline mr-2"/> {t.result_patient}</button>
+                                            <button onClick={()=>{setViewMode('doctor');setAiResult('');}} className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all ${viewMode==='doctor'?'bg-slate-800 text-white shadow-sm':'text-slate-500 hover:text-slate-700'}`}><Icons.UserCheck size={18} className="inline mr-2"/> {t.result_doctor}</button>
+                                        </div>
+
+                                        {/* Patient View */}
+                                        {viewMode === 'patient' && (
+                                            <div className="space-y-6">
+                                                <div className={`p-10 rounded-3xl flex flex-col items-center justify-center space-y-4 shadow-md border-4 text-center ${result.status==='safe'?'bg-green-50 border-green-100':result.status==='caution'?'bg-yellow-50 border-yellow-100':'bg-red-50 border-red-100'}`}>
+                                                    {result.status==='safe'&&<Icons.CheckCircle className="w-24 h-24 text-green-500"/>}
+                                                    {result.status==='caution'&&<Icons.AlertTriangle className="w-24 h-24 text-yellow-500"/>}
+                                                    {result.status==='danger'&&<Icons.ShieldAlert className="w-24 h-24 text-red-500"/>}
+                                                    <h2 className="text-3xl font-bold">{t[result.status]}</h2>
+                                                    <p className="text-lg text-slate-600 font-medium whitespace-pre-line">{result.patientMessage}</p>
+                                                </div>
+                                                <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 relative overflow-hidden">
+                                                    <div className="flex items-center gap-3 mb-4"><div className="p-2 bg-blue-100 rounded-lg"><Icons.Sparkles className="text-blue-600 w-6 h-6"/></div><h3 className="font-bold text-blue-900 text-lg">{t.ai_title}</h3></div>
+                                                    <div className="flex gap-2">
+                                                        <input type="text" value={patientQuestion} onChange={e=>setPatientQuestion(e.target.value)} placeholder={t.ai_placeholder} className="flex-1 p-3 border rounded-xl outline-none" onKeyPress={e=>e.key==='Enter'&&askPatientAI()}/>
+                                                        <button onClick={askPatientAI} disabled={aiLoading} className="bg-blue-600 text-white px-6 rounded-xl font-bold hover:bg-blue-700 transition-colors">{aiLoading?<div className="loader"></div>:t.ai_btn}</button>
+                                                    </div>
+                                                    {aiResult&&<div className="mt-4 bg-white p-4 rounded-xl border border-blue-100 text-sm leading-relaxed shadow-sm" dangerouslySetInnerHTML={{__html: marked.parse(aiResult)}}/>}
+                                                    {aiError&&<p className="text-red-500 text-sm mt-2">{aiError}</p>}
+                                                </div>
+                                                <div className="bg-white p-6 rounded-2xl shadow-sm border">
+                                                    <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2 border-b pb-2"><Icons.FileText size={20}/> {t.items_checked}</h3>
+                                                    <ul className="space-y-3">
+                                                        <li className="text-sm bg-slate-50 p-3 rounded-lg text-slate-700 border border-slate-100 flex gap-2"><span className="font-bold text-blue-600 whitespace-nowrap">• {t.basicInfoTitle}:</span> {answers.basic_gender==='male'?t.gender_male:t.gender_female} / {answers.basic_age} / {answers.basic_weight}kg</li>
+                                                        {(!answers.dental_extraction && !answers.dental_anesthesia && !QUESTIONS.some(q=>answers[q.id]))?<li className="text-slate-400 p-2">{t.none}</li>:(<>{answers.dental_extraction&&<li>• {t.q_extraction}</li>}{answers.dental_anesthesia&&<li>• {t.q_anesthesia} {answers.dental_anesthesia_allergy?`(${t.q_allergy}: ${t.yes})`:''}</li>}{QUESTIONS.filter(q=>answers[q.id]).map(q=><li key={q.id}>• {t[q.key]}</li>)}</>)}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Doctor View */}
+                                        {viewMode === 'doctor' && (
+                                            <div className="space-y-4">
+                                                <div className="bg-slate-800 text-white p-6 rounded-2xl shadow-lg flex justify-between items-center">
+                                                    <div><h3 className="font-bold text-xl flex items-center gap-2"><Icons.Stethoscope size={24}/> Clinical Summary (KR)</h3><div className="text-sm mt-1 text-slate-300">Status: <span className={`font-bold px-2 py-0.5 rounded text-black ml-1 ${result.status==='safe'?'bg-green-400':result.status==='caution'?'bg-yellow-400':'bg-red-400'}`}>{result.status.toUpperCase()}</span></div></div>
+                                                    <div className="text-right text-sm text-slate-400">Language: {lang.toUpperCase()}</div>
+                                                </div>
+                                                {result.doctorNotes.length>0&&( <div className="bg-white border p-6 rounded-2xl shadow-sm"><h4 className="font-bold text-slate-700 flex gap-2 mb-4"><Icons.Sparkles size={20} className="text-purple-600"/> AI Assistance (KR)</h4><button onClick={generateReferralLetter} disabled={aiLoading} className="w-full py-3 bg-purple-50 text-purple-700 border border-purple-200 rounded-xl font-bold text-sm flex justify-center gap-2 hover:bg-purple-100 transition-colors">{aiLoading?<div className="loader"></div>:'진료 의뢰서 작성 (Referral Letter)'}</button>{aiResult&&<div className="mt-4 bg-slate-50 p-5 rounded-xl border text-sm font-mono whitespace-pre-wrap">{aiResult}</div>}</div>)}
+                                                <div className="grid gap-3">
+                                                    {result.doctorNotes.length===0?<div className="text-center py-12 bg-white border-2 border-dashed rounded-2xl text-slate-400">No Specific Contraindications</div>:result.doctorNotes.map((n,i)=>(<div key={i} className={`border-l-4 rounded-r-xl p-5 bg-white shadow-sm flex gap-3 items-start ${n.type==='critical'?'border-red-600 bg-red-50':n.type==='danger'?'border-orange-500':n.type==='warning'?'border-yellow-500':n.type==='info'?'border-sky-500 bg-sky-50':'border-blue-500'}`}><div className="mt-1">{n.type==='critical'?<Icons.AlertTriangle size={20} className="text-red-600"/>:n.type==='info'?<Icons.Scale size={20} className="text-sky-600"/>:<Icons.Activity size={20} className="text-slate-400"/>}</div><div><h4 className="font-bold text-sm mb-1">{n.title}</h4><p className="text-sm text-slate-600 whitespace-pre-line">{n.content}</p></div></div>))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Navigation Footer */}
+                            {step !== 'lang_select' && step !== 'result' && (
+                                <div className="p-6 bg-white border-t sticky bottom-0 z-10 flex justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] no-print">
+                                    {step !== 'intro' ? (
+                                        <>
+                                            <button onClick={handleBack} className="px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition flex items-center gap-2"><Icons.ChevronLeft /> {t.btn_back}</button>
+                                            <button onClick={()=>{
+                                                    if(step==='basic_info')setStep('dental_habits');
+                                                    else if(step==='dental_habits')setStep('dental_history');
+                                                    else if(step==='dental_history')setStep('survey');
+                                                    else handleNext();
+                                                }}
+                                                disabled={step==='basic_info'?!basicAnswered:step==='dental_habits'?!habitAnswered:step==='dental_history'?!dentalAnswered:!medicalAnswered}
+                                                className={`px-8 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all ${
+                                                    (step==='basic_info'?basicAnswered:step==='dental_habits'?habitAnswered:step==='dental_history'?dentalAnswered:medicalAnswered)
+                                                    ?'bg-blue-600 text-white hover:bg-blue-700 hover:px-10'
+                                                    :'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                                }`}
+                                            >
+                                                {step==='basic_info'?t.btn_next_basic:step==='dental_habits'?t.btn_next_habit:step==='dental_history'?t.btn_next:t.btn_result} <Icons.ChevronRight/>
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <div/> // Placeholder for spacing
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<DentalScreeningApp />);
+    </script>
+</body>
+</html>
