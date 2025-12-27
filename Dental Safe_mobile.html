@@ -36,19 +36,21 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* --- A4 Print Optimization --- */
+        /* --- A4 Print Optimization (수정됨) --- */
         @media print {
             @page { margin: 1cm; size: A4; }
-            body { background-color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             
-            /* 화면 UI 숨기기 */
-            .no-print, header, .shadow-xl, .bg-slate-50 { display: none !important; box-shadow: none !important; background: white !important; }
+            /* 배경색 제거 및 강제 흰색 설정 (숨김 처리 아님) */
+            body, .bg-slate-50 { background-color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            
+            /* 화면 UI 숨기기 (헤더, 그림자 등) */
+            .no-print, header, .shadow-xl { display: none !important; box-shadow: none !important; }
             
             /* 인쇄 영역 보이기 */
             .print-only { display: block !important; }
             
             /* 컨테이너 리셋 */
-            .w-full.max-w-md { max-width: 100% !important; width: 100% !important; margin: 0 !important; overflow: visible !important; height: auto !important; }
+            .w-full.max-w-md { max-width: 100% !important; width: 100% !important; margin: 0 !important; overflow: visible !important; height: auto !important; border: none !important; box-shadow: none !important; }
             main { padding: 0 !important; overflow: visible !important; }
 
             /* 테이블 스타일 */
@@ -69,7 +71,7 @@
         const { useState, useMemo, useEffect } = React;
         const apiKey = ""; 
 
-        // --- Icons (생략 없이 유지) ---
+        // --- Icons ---
         const Icon = ({ children, color = "currentColor", size = 24, className = "" }) => (
             <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
         );
@@ -92,7 +94,7 @@
             Droplet: (p) => <Icon {...p}><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></Icon>,
             Biohazard: (p) => <Icon {...p}><circle cx="12" cy="12" r="10" /><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" stroke="none" /><path d="M8 12h8"/><path d="M12 8v8"/></Icon>,
             Printer: (p) => <Icon {...p}><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></Icon>,
-            Sparkles: (p) => <Icon {...p}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></Icon>,
+            Sparkles: (p) => <Icon {...p}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L12 3Z"/></Icon>,
             Settings: (p) => <Icon {...p}><path d="M12.22 2h-.44a2 2 0 0 1-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.73v.51a2 2 0 0 1-1 1.73l-.15.1a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73v.18a2 2 0 0 1 2 2h.44a2 2 0 0 1 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.73v-.51a2 2 0 0 1 1-1.73l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 1-2-2z"/><circle cx="12" cy="12" r="3"/></Icon>,
             Tooth: (p) => <Icon {...p}><path d="M4.2 18.2A6.66 6.66 0 0 1 4 15V8a4 4 0 0 1 4-4 4 4 0 0 1 4 4v3a4 4 0 0 1 4-4 4 4 0 0 1 4 4v7a6.66 6.66 0 0 1-.2 3.2 2 2 0 0 1-3.8 0A4 4 0 0 1 12 18a4 4 0 0 1-4.2.2 2 2 0 0 1-3.6 0Z"/></Icon>,
             Globe: (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></Icon>,
@@ -113,9 +115,11 @@
                 q_hypertension: "현재 고혈압 진단을 받았거나 혈압약을 복용 중이신가요?", d_hypertension: "진단 받은 적이 없더라도 혈압이 높다고 느끼시면 체크해주세요.",
                 q_heart: "협심증, 부정맥 등 심장 질환이 있으신가요?", d_heart: "관상동맥 질환, 스텐트 시술 등", q_heart_symptom: "최근 6개월 이내에 가슴 통증이나 호흡 곤란 증상이 있었나요?",
                 q_diabetes: "당뇨병이 있거나 인슐린/당뇨약을 사용 중이신가요?", d_diabetes: "당뇨가 의심되거나 최근 혈당 수치 확인이 필요하시면 체크해주세요.",
+                lbl_high_sugar: "고혈당 증상 (High Sugar)", lbl_low_sugar: "저혈당 증상 (Low Sugar)",
                 q_anticoagulant: "피를 묽게 하는 약(아스피린, 와파린 등)을 드시나요?", d_anticoagulant: "심혈관 질환, 뇌졸중 예방 목적으로 복용 중입니다.",
                 q_bleeding: "상처가 났을 때 피가 잘 멎지 않거나, 멍이 쉽게 드나요?", d_bleeding: "과거 발치나 수술 후 지혈이 어려웠던 경험이 있다면 체크해주세요.",
                 q_osteoporosis: "골다공증 약을 드시거나 주사를 맞으신 적이 있나요?", d_osteoporosis: "비스포스포네이트 계열 약물 복용 혹은 주사 치료 경험.", q_osteo_type: "드시는 약인가요, 주사제인가요?", opt_oral: "먹는 약 (경구)", opt_inject: "주사제",
+                q_osteo_date: "최근 투약일이 언제인가요?", placeholder_date: "예: 2023.12 또는 어제",
                 q_infectious: "간염, 결핵 등 전염성 질환을 앓고 계신가요?", d_infectious: "체크 시 세부 항목을 선택할 수 있습니다. 의료진의 안전을 위해 꼭 알려주세요.",
                 q_steroid: "스테로이드 제제를 복용하거나 주사를 맞고 계신가요?", d_steroid: "장기 복용 중인 경우 체크해주세요.",
                 q_endocarditis: "과거에 심내막염을 앓았거나 인공 심장 판막 수술을 받으셨나요?", d_endocarditis: "선천성 심장 질환 포함.",
@@ -142,9 +146,11 @@
                 q_hypertension: "Do you have hypertension or take blood pressure medication?", d_hypertension: "Check if you feel your blood pressure is high even without diagnosis.",
                 q_heart: "Do you have heart disease (Angina, Arrhythmia)?", d_heart: "Coronary artery disease, Stent placement, etc.", q_heart_symptom: "Have you had chest pain or shortness of breath in the last 6 months?",
                 q_diabetes: "Do you have diabetes or use insulin/medication?", d_diabetes: "Check if you suspect diabetes or need recent level check.",
+                lbl_high_sugar: "High Sugar Symptom", lbl_low_sugar: "Low Sugar Symptom",
                 q_anticoagulant: "Do you take blood thinners (Aspirin, Warfarin, etc.)?", d_anticoagulant: "For cardiovascular disease or stroke prevention.",
                 q_bleeding: "Do you bleed easily or have difficulty stopping bleeding?", d_bleeding: "History of prolonged bleeding after extraction/surgery.",
                 q_osteoporosis: "Do you take osteoporosis medication or injections?", d_osteoporosis: "Bisphosphonates or injection therapy history.", q_osteo_type: "Is it oral medication or injection?", opt_oral: "Oral (Pill)", opt_inject: "Injection",
+                q_osteo_date: "When was the last dose?", placeholder_date: "e.g. Yesterday or 2023.12",
                 q_infectious: "Do you have infectious diseases?", d_infectious: "Please specify for safety.",
                 q_steroid: "Are you taking or receiving Steroids?", d_steroid: "Check if long-term usage.",
                 q_endocarditis: "History of endocarditis or artificial heart valve?", d_endocarditis: "Includes congenital heart defects.",
@@ -160,11 +166,144 @@
                 privacyNotice: "The information you provide is used solely for your safe dental treatment and will not be used for any other purpose.",
                 disease_hbv: "HBV (Hepatitis B)", disease_hcv: "HCV (Hepatitis C)", disease_tb: "TB (Tuberculosis)", disease_hiv: "HIV (AIDS)", disease_other: "Other"
             },
-            // ... (Other languages: zh, ja, vi, mn, ar kept same but omitted for brevity in response. Assume they exist) ...
+            zh: {
+                title: "牙科治疗前安全检查", subtitle: "为了安全治疗，我们需要检查您的全身健康状况。", startBtn: "开始自测", btn_back: "上一步",
+                basicInfoTitle: "基本信息", basicInfoDesc: "请输入您的性别、年龄和体重。", label_gender: "性别", gender_male: "男性", gender_female: "女性", label_age: "年龄", label_weight: "体重 (kg)", placeholder_age: "例如: 45", placeholder_weight: "例如: 70", btn_next_basic: "下一步 (口腔习惯)",
+                habitInfoTitle: "口腔护理习惯", habitInfoDesc: "请告知我们您的牙科就诊和护理习惯。", q_visit_freq: "您何时看牙医？", opt_visit_pain: "只在痛的时候", opt_visit_uncomfortable: "稍微不适时", opt_visit_periodic: "定期 (每6-12个月)", q_prev_discomfort: "以往治疗的不适经历", opt_painful: "太痛了", opt_okay: "还可以", q_brushing: "每天刷牙几次？", q_floss: "使用牙线或牙间刷吗？", btn_next_habit: "下一步 (牙科病史)",
+                dentalHistoryTitle: "牙科病史", dentalHistoryDesc: "请告知您过去的牙科经历。", q_extraction: "您曾经拔过牙吗？", q_anesthesia: "您曾经接受过牙科麻醉（注射）吗？", q_allergy: "当时对麻醉剂有过敏反应吗？", q_allergy_detail: "荨麻疹、呼吸困难、休克等",
+                medHistoryTitle: "全身健康状况", medHistoryDesc: "请勾选所有适用项。", yes: "是", no: "否", yes_had: "是的，有过",
+                placeholder_bp: "您知道当前的血压吗？", placeholder_bs: "当前血糖状态", placeholder_infectious: "请选择所有适用的疾病",
+                q_hypertension: "您有高血压或正在服用降压药吗？", d_hypertension: "即使没有确诊，若感觉血压高也请勾选。",
+                q_heart: "您有心脏病（心绞痛、心律失常）吗？", d_heart: "冠心病、支架植入等。", q_heart_symptom: "最近6个月内有胸痛或呼吸困难吗？",
+                q_diabetes: "您有糖尿病或使用胰岛素/药物吗？", d_diabetes: "若怀疑糖尿病或需检查血糖请勾选。",
+                lbl_high_sugar: "高血糖症状", lbl_low_sugar: "低血糖症状",
+                q_anticoagulant: "您服用血液稀释剂（阿司匹林、华法林等）吗？", d_anticoagulant: "用于预防心血管疾病或中风。",
+                q_bleeding: "您是否容易出血或止血困难？", d_bleeding: "拔牙或手术后止血困难史。",
+                q_osteoporosis: "您服用骨质疏松药物或注射过吗？", d_osteoporosis: "双膦酸盐类药物或注射治疗史。", q_osteo_type: "是口服药还是注射剂？", opt_oral: "口服", opt_inject: "注射",
+                q_osteo_date: "最近一次用药是什么时候？", placeholder_date: "例如：昨天 或 2023.12",
+                q_infectious: "您有传染病吗？", d_infectious: "为了安全，请务必告知。",
+                q_steroid: "您正在服用或注射类固醇吗？", d_steroid: "如果是长期使用，请勾选。",
+                q_endocarditis: "有心内膜炎史或人工心脏瓣膜吗？", d_endocarditis: "包括先天性心脏病。",
+                q_kidney: "正在透析或有严重肝病吗？", d_kidney: "肝硬化、终末期肾衰竭等。",
+                q_pregnancy: "您怀孕或可能怀孕了吗？", d_pregnancy: "包括哺乳期。",
+                q_other_meds: "请列出您正在服用的其他药物。",
+                btn_next: "下一步 (健康检查)", btn_result: "查看结果", btn_reset: "重置", btn_print: "打印", result_patient: "患者视图", result_doctor: "医生视图", safe: "可以治疗", caution: "需要咨询", danger: "需要注意",
+                msg_safe: "今天可以接受预定的治疗。", msg_caution: "经医生咨询后可安全进行治疗。", msg_danger: "为了安全，治疗可能会推迟。",
+                ai_title: "AI 牙科咨询", ai_desc: "关于您的状况，如有疑问请提问。", ai_placeholder: "请输入问题...", ai_btn: "提问", items_checked: "已选项目", none: "无", other: "其他", input_other: "请输入疾病名称",
+                privacyNotice: "您提供的信息仅用于您的安全牙科治疗，不会用于任何其他用途。",
+                disease_hbv: "HBV (乙肝)", disease_hcv: "HCV (丙肝)", disease_tb: "TB (结核)", disease_hiv: "HIV (艾滋病)", disease_other: "其他"
+            },
+            ja: {
+                title: "歯科治療前の安全チェック", subtitle: "安全な診療のために全身の健康状態を確認します。", startBtn: "診断を開始", btn_back: "戻る",
+                basicInfoTitle: "基本情報", basicInfoDesc: "性別、年齢、体重を入力してください。", label_gender: "性別", gender_male: "男性", gender_female: "女性", label_age: "年齢", label_weight: "体重 (kg)", placeholder_age: "例: 45", placeholder_weight: "例: 70", btn_next_basic: "次へ (口腔ケア習慣)",
+                habitInfoTitle: "口腔ケア習慣", habitInfoDesc: "普段の歯科受診やケア習慣について教えてください。", q_visit_freq: "歯科に行くタイミングは？", opt_visit_pain: "痛い時だけ", opt_visit_uncomfortable: "少し不快な時", opt_visit_periodic: "定期的 (6-12ヶ月毎)", q_prev_discomfort: "以前の治療で不快だった点", opt_painful: "痛すぎた", opt_okay: "大丈夫だった", q_brushing: "1日の歯磨き回数", q_floss: "フロスや歯間ブラシを使いますか？", btn_next_habit: "次へ (歯科治療歴)",
+                dentalHistoryTitle: "歯科治療歴", dentalHistoryDesc: "過去の歯科経験について教えてください。", q_extraction: "過去に歯を抜いた（抜歯）経験はありますか？", q_anesthesia: "歯科治療で麻酔注射をしたことはありますか？", q_allergy: "その際、麻酔薬にアレルギー反応はありましたか？", q_allergy_detail: "じんましん、呼吸困難、ショックなど",
+                medHistoryTitle: "全身の健康状態", medHistoryDesc: "該当する項目にチェックしてください。", yes: "はい", no: "いいえ", yes_had: "はい、ありました",
+                placeholder_bp: "現在の血圧をご存知ですか？", placeholder_bs: "現在の血糖値の状態", placeholder_infectious: "該当する疾患を選択してください",
+                q_hypertension: "現在、高血圧の診断を受けたか、薬を服用中ですか？", d_hypertension: "診断がなくても血圧が高いと感じる場合はチェック。",
+                q_heart: "心臓病（狭心症、不整脈など）はありますか？", d_heart: "冠動脈疾患、ステント治療など。", q_heart_symptom: "過去6ヶ月以内に胸痛や息切れがありましたか？",
+                q_diabetes: "糖尿病がある、またはインスリン/薬を使用中ですか？", d_diabetes: "糖尿病の疑いがある、または数値確認が必要な場合。",
+                lbl_high_sugar: "高血糖症状", lbl_low_sugar: "低血糖症状",
+                q_anticoagulant: "血液をサラサラにする薬（アスピリン等）を飲んでいますか？", d_anticoagulant: "心血管疾患、脳卒中予防のため。",
+                q_bleeding: "出血しやすかったり、血が止まりにくいですか？", d_bleeding: "抜歯や手術後の止血困難の経験。",
+                q_osteoporosis: "骨粗鬆症の薬を服用、または注射を受けていますか？", d_osteoporosis: "ビスホスホネート系薬剤の服用または注射歴。", q_osteo_type: "飲み薬ですか、注射ですか？", opt_oral: "飲み薬", opt_inject: "注射",
+                q_osteo_date: "最後に使用したのはいつですか？", placeholder_date: "例: 昨日、または 2023.12",
+                q_infectious: "感染症にかかっていますか？", d_infectious: "安全のため、必ずお知らせください。",
+                q_steroid: "ステロイド剤を服用または注射していますか？", d_steroid: "長期使用中の場合はチェック。",
+                q_endocarditis: "心内膜炎の既往や人工心臓弁の手術歴はありますか？", d_endocarditis: "先天性心疾患を含む。",
+                q_kidney: "透析中、または重度の肝疾患がありますか？", d_kidney: "肝硬変、末期腎不全など。",
+                q_pregnancy: "現在妊娠中、または妊娠の可能性がありますか？", d_pregnancy: "授乳中も含む。",
+                q_other_meds: "その他に服用中の薬があれば入力してください。",
+                btn_next: "次へ (健康チェック)", btn_result: "結果を確認", btn_reset: "最初に戻る", btn_print: "印刷", result_patient: "患者用結果", result_doctor: "医療者用詳細", safe: "診療可能", caution: "相談が必要", danger: "注意が必要",
+                msg_safe: "本日予定されている治療を受けることができます。", msg_caution: "医師との相談後、安全に治療を進められます。", msg_danger: "安全のため、本日の治療は延期される可能性があります。",
+                ai_title: "AI 歯科相談", ai_desc: "ご自身の状態について質問してください。", ai_placeholder: "質問を入力...", ai_btn: "質問", items_checked: "チェックした項目", none: "特になし", other: "その他", input_other: "疾患名を入力",
+                privacyNotice: "ご入力いただいた情報は、安全な歯科治療のためにのみ使用され、他の目的には使用されません。",
+                disease_hbv: "HBV (B型肝炎)", disease_hcv: "HCV (C型肝炎)", disease_tb: "TB (結核)", disease_hiv: "HIV (エイズ)", disease_other: "その他"
+            },
+            vi: {
+                title: "Kiểm tra an toàn nha khoa", subtitle: "Kiểm tra sức khỏe toàn thân để điều trị an toàn.", startBtn: "Bắt đầu", btn_back: "Quay lại",
+                basicInfoTitle: "Thông tin cơ bản", basicInfoDesc: "Vui lòng nhập giới tính, tuổi và cân nặng của bạn.", label_gender: "Giới tính", gender_male: "Nam", gender_female: "Nữ", label_age: "Tuổi", label_weight: "Cân nặng (kg)", placeholder_age: "Ví dụ: 45", placeholder_weight: "Ví dụ: 70", btn_next_basic: "Tiếp theo (Thói quen nha khoa)",
+                habitInfoTitle: "Thói quen nha khoa", habitInfoDesc: "Vui lòng cho biết thói quen chăm sóc răng miệng của bạn.", q_visit_freq: "Khi nào bạn đi nha sĩ?", opt_visit_pain: "Chỉ khi đau", opt_visit_uncomfortable: "Khi hơi khó chịu", opt_visit_periodic: "Định kỳ (6-12 tháng)", q_prev_discomfort: "Kinh nghiệm điều trị trước đây", opt_painful: "Quá đau", opt_okay: "Ổn, chịu đựng được", q_brushing: "Đánh răng bao nhiêu lần một ngày?", q_floss: "Có dùng chỉ nha khoa/bàn chải kẽ không?", btn_next_habit: "Tiếp theo (Lịch sử nha khoa)",
+                dentalHistoryTitle: "Lịch sử Nha khoa", dentalHistoryDesc: "Vui lòng cho biết kinh nghiệm nha khoa trước đây.", q_extraction: "Bạn đã từng nhổ răng chưa?", q_anesthesia: "Bạn đã từng tiêm thuốc tê nha khoa chưa?", q_allergy: "Bạn có bị dị ứng với thuốc tê không?", q_allergy_detail: "Nổi mề đay, khó thở, sốc, v.v.",
+                medHistoryTitle: "Tình trạng sức khỏe", medHistoryDesc: "Vui lòng chọn các mục phù hợp.", yes: "Có", no: "Không", yes_had: "Vâng, đã từng",
+                placeholder_bp: "Bạn có biết huyết áp hiện tại không?", placeholder_bs: "Tình trạng đường huyết hiện tại", placeholder_infectious: "Chọn tất cả các bệnh mắc phải",
+                q_hypertension: "Bạn có bị cao huyết áp hoặc đang uống thuốc không?", d_hypertension: "Chọn nếu bạn cảm thấy huyết áp cao dù chưa chẩn đoán.",
+                q_heart: "Bạn có bị bệnh tim (Đau thắt ngực, Loạn nhịp) không?", d_heart: "Bệnh mạch vành, Đặt stent, v.v.", q_heart_symptom: "Bạn có bị đau ngực hoặc khó thở trong 6 tháng qua không?",
+                q_diabetes: "Bạn có bị tiểu đường hoặc dùng insulin/thuốc không?", d_diabetes: "Chọn nếu nghi ngờ tiểu đường.",
+                lbl_high_sugar: "Triệu chứng đường huyết cao", lbl_low_sugar: "Triệu chứng đường huyết thấp",
+                q_anticoagulant: "Bạn có uống thuốc làm loãng máu (Aspirin, v.v.) không?", d_anticoagulant: "Phòng ngừa bệnh tim mạch, đột quỵ.",
+                q_bleeding: "Bạn có dễ bị chảy máu hoặc khó cầm máu không?", d_bleeding: "Tiền sử khó cầm máu sau nhổ răng/phẫu thuật.",
+                q_osteoporosis: "Bạn có uống thuốc hoặc tiêm thuốc loãng xương không?", d_osteoporosis: "Thuốc Bisphosphonate hoặc tiêm.", q_osteo_type: "Thuốc uống hay thuốc tiêm?", opt_oral: "Uống", opt_inject: "Tiêm",
+                q_osteo_date: "Lần dùng thuốc gần nhất là khi nào?", placeholder_date: "Ví dụ: Hôm qua hoặc 2023.12",
+                q_infectious: "Bạn có mắc bệnh truyền nhiễm không?", d_infectious: "Vui lòng thông báo để đảm bảo an toàn.",
+                q_steroid: "Bạn có đang dùng hoặc tiêm Steroid không?", d_steroid: "Chọn nếu dùng dài hạn.",
+                q_endocarditis: "Tiền sử viêm nội tâm mạc hoặc van tim nhân tạo?", d_endocarditis: "Bao gồm bệnh tim bẩm sinh.",
+                q_kidney: "Đang chạy thận hoặc bệnh gan nặng?", d_kidney: "Xơ gan, suy thận giai đoạn cuối, v.v.",
+                q_pregnancy: "Bạn đang mang thai hoặc có khả năng mang thai?", d_pregnancy: "Bao gồm đang cho con bú.",
+                q_other_meds: "Vui lòng liệt kê các loại thuốc khác bạn đang dùng.",
+                btn_next: "Tiếp theo (Kiểm tra y tế)", btn_result: "Xem kết quả", btn_reset: "Làm lại", btn_print: "In", result_patient: "Kết quả (Bệnh nhân)", result_doctor: "Chi tiết (Bác sĩ)", safe: "Có thể điều trị", caution: "Cần tư vấn", danger: "Cần chú ý",
+                msg_safe: "Bạn có thể điều trị theo kế hoạch hôm nay.", msg_caution: "Có thể điều trị an toàn sau khi tư vấn.", msg_danger: "Điều trị có thể bị hoãn vì lý do an toàn.",
+                ai_title: "Trợ lý AI Nha khoa", ai_desc: "Đặt câu hỏi về tình trạng của bạn.", ai_placeholder: "Nhập câu hỏi...", ai_btn: "Hỏi", items_checked: "Các mục đã chọn", none: "Không có", other: "Khác", input_other: "Nhập tên bệnh",
+                privacyNotice: "Thông tin bạn cung cấp chỉ được sử dụng cho việc điều trị nha khoa an toàn của bạn và sẽ không được sử dụng cho bất kỳ mục đích nào khác.",
+                disease_hbv: "HBV (Viêm gan B)", disease_hcv: "HCV (Viêm gan C)", disease_tb: "TB (Lao)", disease_hiv: "HIV (AIDS)", disease_other: "Khác"
+            },
+            mn: {
+                title: "Шүдний эмчилгээний өмнөх аюулгүй байдлын шалгалт", subtitle: "Аюулгүй эмчилгээ хийхийн тулд таны ерөнхий эрүүл мэндийг шалгах болно.", startBtn: "Оношилгоо эхлүүлэх", btn_back: "Буцах",
+                basicInfoTitle: "Үндсэн мэдээлэл", basicInfoDesc: "Хүйс, нас болон жингээ оруулна уу.", label_gender: "Хүйс", gender_male: "Эрэгтэй", gender_female: "Эмэгтэй", label_age: "Нас", label_weight: "Жин (кг)", placeholder_age: "Жишээ: 45", placeholder_weight: "Жишээ: 70", btn_next_basic: "Дараах (Шүдний зуршил)",
+                habitInfoTitle: "Амны хөндийн арчилгаа", habitInfoDesc: "Шүдний эмнэлэгт үзүүлэх болон арчилгааны талаар хэлнэ үү.", q_visit_freq: "Хэзээ шүдний эмчид очдог вэ?", opt_visit_pain: "Өвдсөн үед л", opt_visit_uncomfortable: "Ялимгүй таагүй үед", opt_visit_periodic: "Тогтмол (6-12 сар тутам)",
+                q_prev_discomfort: "Өмнөх эмчилгээний үеийн таагүй байдал", opt_painful: "Маш их өвдсөн", opt_okay: "Зүгээр байсан", q_brushing: "Өдөрт хэдэн удаа шүдээ угаадаг вэ?", q_floss: "Шүдний утас ашигладаг уу?", btn_next_habit: "Дараах (Шүдний түүх)",
+                dentalHistoryTitle: "Шүдний эмчилгээний түүх", dentalHistoryDesc: "Өмнөх шүдний эмчилгээний туршлагаа бидэнд хэлнэ үү.", q_extraction: "Та шүдээ авахуулж байсан уу?", q_anesthesia: "Та шүдний эмчилгээ хийлгэхдээ мэдээ алдуулалт (тариур) хийлгэж байсан уу?", q_allergy: "Тухайн үед мэдээ алдуулагчаас харшилж байсан уу?", q_allergy_detail: "Тууралт, амьсгалахад хүндрэлтэй болох, шок гэх мэт.",
+                medHistoryTitle: "Эрүүл мэндийн байдал", medHistoryDesc: "Тохирох хэсгийг сонгоно уу.", yes: "Тийм", no: "Үгүй", yes_had: "Тийм, байсан",
+                placeholder_bp: "Та одоогийн даралтаа мэдэх үү?", placeholder_bs: "Цусан дахь сахарын хэмжээ", placeholder_infectious: "Холбогдох өвчнийг сонгоно уу",
+                q_hypertension: "Та даралт ихсэх өвчтэй эсвэл даралтын эм уудаг уу?", d_hypertension: "Оношлогдоогүй ч даралт ихсэж байгаа мэт санагдвал сонгоно уу.",
+                q_heart: "Танд зүрхний өвчин (бахуу, хэм алдагдал) бий юу?", d_heart: "Титэм судасны өвчин, стент тавиулах гэх мэт.", q_heart_symptom: "Сүүлийн 6 сард цээжээр өвдөх, амьсгал давчдах шинж тэмдэг илэрсэн үү?",
+                q_diabetes: "Та чихрийн шижинтэй эсвэл инсулин/эм хэрэглэдэг үү?", d_diabetes: "Чихрийн шижин гэж сэжиглэж байгаа бол сонгоно уу.",
+                lbl_high_sugar: "Цусан дахь сахар ихсэх шинж тэмдэг", lbl_low_sugar: "Цусан дахь сахар багасах шинж тэмдэг",
+                q_anticoagulant: "Та цус шингэлэх эм (Аспирин, Варфарин гэх мэт) уудаг уу?", d_anticoagulant: "Зүрх судасны өвчин, цус харвалтаас урьдчилан сэргийлэх.",
+                q_bleeding: "Та амархан цус алддаг эсвэл цус тогтохгүй уддаг уу?", d_bleeding: "Шүд авахуулах эсвэл хагалгааны дараа цус тогтохгүй байсан түүх.",
+                q_osteoporosis: "Та ясны сийрэгжилтийн эм уудаг эсвэл тариа хийлгэдэг үү?", d_osteoporosis: "Бисфосфонат эм эсвэл тариа эмчилгээ.", q_osteo_type: "Уудаг эм үү, тариа юу?", opt_oral: "Уудаг эм", opt_inject: "Тариа",
+                q_osteo_date: "Хамгийн сүүлд хэзээ эм хэрэглэсэн бэ?", placeholder_date: "Жишээ: Өчигдөр эсвэл 2023.12",
+                q_infectious: "Танд халдварт өвчин бий юу?", d_infectious: "Аюулгүй байдлын үүднээс бидэнд мэдэгдэнэ үү.",
+                q_steroid: "Та стероид хэрэглэж байгаа юу?", d_steroid: "Удаан хугацаагаар хэрэглэж байгаа бол.",
+                q_endocarditis: "Зүрхний дотор талын үрэвсэл эсвэл хиймэл хавхлагтай юу?", d_endocarditis: "Төрөлхийн зүрхний гажиг орно.",
+                q_kidney: "Диализд ордог эсвэл элэгний хүнд өвчтэй юу?", d_kidney: "Элэгний хатуурал, бөөрний дутагдал гэх мэт.",
+                q_pregnancy: "Та жирэмсэн эсвэл жирэмсэн байх магадлалтай юу?", d_pregnancy: "Хөхүүл үе орно.",
+                q_other_meds: "Өөр эм хэрэглэж байгаа бол бичнэ үү.",
+                btn_next: "Дараах (Эрүүл мэндийн шалгалт)", btn_result: "Үр дүнг харах", btn_reset: "Эхлэх", btn_print: "Хэвлэх", result_patient: "Өвчтөнд", result_doctor: "Эмчид", safe: "Эмчилгээ хийх боломжтой", caution: "Зөвлөгөө шаардлагатай", danger: "Анхаарал шаардлагатай",
+                msg_safe: "Өнөөдөр төлөвлөсөн эмчилгээгээ хийлгэх боломжтой.", msg_caution: "Эмчтэй зөвлөлдсөний дараа аюулгүй эмчилгээ хийх боломжтой.", msg_danger: "Аюулгүй байдлын үүднээс эмчилгээг хойшлуулж магадгүй.",
+                ai_title: "AI Шүдний туслах", ai_desc: "Өөрийн нөхцөл байдлын талаар асуулт асууна уу.", ai_placeholder: "Асуултаа бичнэ үү...", ai_btn: "Асуух", items_checked: "Сонгосон зүйлс", none: "Байхгүй", other: "Бусад", input_other: "Өвчний нэрийг оруулна уу",
+                privacyNotice: "Таны өгсөн мэдээллийг зөвхөн аюулгүй шүдний эмчилгээнд ашиглах бөгөөд өөр зорилгоор ашиглахгүй.",
+                disease_hbv: "HBV (В гепатит)", disease_hcv: "HCV (С гепатит)", disease_tb: "TB (Сүрьеэ)", disease_hiv: "HIV (ДОХ)", disease_other: "Бусад"
+            },
+            ar: {
+                title: "فحص السلامة قبل علاج الأسنان", subtitle: "نقوم بفحص صحتك العامة لضمان علاج آمن.", startBtn: "ابدأ التشخيص", btn_back: "السابق",
+                basicInfoTitle: "المعلومات الأساسية", basicInfoDesc: "يرجى إدخال الجنس والعمر والوزن.", label_gender: "الجنس", gender_male: "ذكر", gender_female: "أنثى", label_age: "العمر", label_weight: "الوزن (كجم)", placeholder_age: "مثال: 45", placeholder_weight: "مثال: 70", btn_next_basic: "التالي (عادات الأسنان)",
+                habitInfoTitle: "عادات العناية بالأسنان", habitInfoDesc: "يرجى إخبارنا عن عادات زيارة طبيب الأسنان والعناية بها.", q_visit_freq: "متى تزور طبيب الأسنان؟", opt_visit_pain: "عند الألم فقط", opt_visit_uncomfortable: "عند الانزعاج قليلاً", opt_visit_periodic: "دورياً (كل 6-12 شهر)",
+                q_prev_discomfort: "تجربة العلاج السابقة", opt_painful: "مؤلمة جداً", opt_okay: "كانت مقبولة", q_brushing: "كم مرة تنظف أسنانك في اليوم؟", q_floss: "هل تستخدم خيط الأسنان أو الفرشاة البينية؟", btn_next_habit: "التالي (تاريخ الأسنان)",
+                dentalHistoryTitle: "تاريخ علاج الأسنان", dentalHistoryDesc: "يرجى إخبارنا عن تجاربك السابقة مع علاج الأسنان.", q_extraction: "هل سبق لك خلع سن؟", q_anesthesia: "هل سبق لك تلقي تخدير الأسنان (حقن)؟", q_allergy: "هل عانيت من رد فعل تحسسي تجاه التخدير؟", q_allergy_detail: "طفح جلدي، صعوبة في التنفس، صدمة، إلخ.",
+                medHistoryTitle: "التاريخ الطبي", medHistoryDesc: "يرجى تحديد كل ما ينطبق.", yes: "نعم", no: "لا", yes_had: "نعم، حدث ذلك",
+                placeholder_bp: "هل تعرف ضغط دمك الحالي؟", placeholder_bs: "حالة سكر الدم الحالية", placeholder_infectious: "يرجى تحديد جميع الأمراض المنطبقة",
+                q_hypertension: "هل تعاني من ارتفاع ضغط الدم أو تتناول أدوية الضغط؟", d_hypertension: "حدد إذا كنت تشعر بارتفاع الضغط حتى بدون تشخيص.",
+                q_heart: "هل تعاني من أمراض القلب (الذبحة الصدرية، عدم انتظام ضربات القلب)؟", d_heart: "أمرض الشريان التاجي، الدعامات، إلخ.", q_heart_symptom: "هل عانيت من ألم في الصدر أو ضيق في التنفس في آخر 6 أشهر؟",
+                q_diabetes: "هل تعاني من السكري أو تستخدم الأنسولين/الأدوية؟", d_diabetes: "حدد إذا كنت تشك في الإصابة بالسكري.",
+                lbl_high_sugar: "أعراض ارتفاع السكر", lbl_low_sugar: "أعراض انخفاض السكر",
+                q_anticoagulant: "هل تتناول مميعات الدم (أسبرين، وارفارين، إلخ)؟", d_anticoagulant: "للوقاية من أمراض القلب والأوعية الدموية أو السكتة الدماغية.",
+                q_bleeding: "هل تنزف بسهولة أو تجد صعوبة في وقف النزيف؟", d_bleeding: "تاريخ من النزيف المستمر بعد الخلع/الجراحة.",
+                q_osteoporosis: "هل تتناول أدوية أو حقن هشاشة العظام؟", d_osteoporosis: "تاريخ العلاج بالبيسفوسفونات أو الحقن.", q_osteo_type: "هل هو دواء فموي أم حقن؟", opt_oral: "فموي", opt_inject: "حقن",
+                q_osteo_date: "متى كانت آخر جرعة؟", placeholder_date: "مثال: البارحة أو 2023.12",
+                q_infectious: "هل تعاني من أمراض معدية؟", d_infectious: "يرجى التحديد لضمان السلامة.",
+                q_steroid: "هل تتناول أو تتلقى المنشطات (الستيرويدات)؟", d_steroid: "حدد إذا كان الاستخدام طويل الأمد.",
+                q_endocarditis: "هل لديك تاريخ من التهاب الشغاف أو صمام قلب صناعي؟", d_endocarditis: "يشمل عيوب القلب الخلقية.",
+                q_kidney: "هل تخضع لغسيل الكلى أو تعاني من مرض كبدي حاد؟", d_kidney: "تليف الكبد، الفشل الكلوي في المرحلة النهائية، إلخ.",
+                q_pregnancy: "هل أنت حامل أو يحتمل أن تكوني حاملاً؟", d_pregnancy: "يشمل الرضاعة الطبيعية.",
+                q_other_meds: "يرجى ذكر أي أدوية أخرى تتناولها.",
+                btn_next: "التالي (الفحص الطبي)", btn_result: "عرض النتائج", btn_reset: "إعادة تعيين", btn_print: "طباعة", result_patient: "عرض المريض", result_doctor: "عرض الطبيب", safe: "آمن للعلاج", caution: "يحتاج استشارة", danger: "انتباه مطلوب",
+                msg_safe: "يمكنك تلقي العلاج المجدول اليوم.", msg_caution: "يمكن متابعة العلاج بأمان بعد الاستشارة.", msg_danger: "قد يتم تأجيل العلاج لأسباب تتعلق بالسلامة.",
+                ai_title: "مساعد الذكاء الاصطناعي للأسنان", ai_desc: "اطرح أي أسئلة حول حالتك.", ai_placeholder: "اكتب سؤالك...", ai_btn: "اسأل", items_checked: "العناصر المحددة", none: "لا يوجد", other: "أخرى", input_other: "يرجى التحديد",
+                privacyNotice: "يتم استخدام المعلومات التي تقدمها فقط لعلاج أسنانك بأمان ولن يتم استخدامها لأي غرض آخر.",
+                disease_hbv: "HBV (التهاب الكبد ب)", disease_hcv: "HCV (التهاب الكبد سي)", disease_tb: "TB (السل)", disease_hiv: "HIV (الإيدز)", disease_other: "أخرى"
+            }
         };
-
-        // Fallback for missing languages for this demo
-        TRANSLATIONS.zh = TRANSLATIONS.en; TRANSLATIONS.ja = TRANSLATIONS.en; TRANSLATIONS.vi = TRANSLATIONS.en; TRANSLATIONS.mn = TRANSLATIONS.en; TRANSLATIONS.ar = TRANSLATIONS.en;
 
         const QUESTIONS = [
             { id: 'hypertension', key: 'q_hypertension', detailKey: 'd_hypertension', category: 'cardio', hasInputs: true },
@@ -292,6 +431,9 @@
                     if(status!=='danger') status='caution';
                     osteoContent += ' (경구약). BRONJ 위험성 고지.';
                 }
+                if (answers.osteoporosis_date) {
+                    osteoContent += ` (최근 투약: ${answers.osteoporosis_date})`;
+                }
                 doctorNotes.push({type: osteoStatus, title: '골다공증 (Osteoporosis)', content: osteoContent});
             }
 
@@ -374,7 +516,7 @@
                         if (id === 'hypertension') { delete next.bp_sys; delete next.bp_dia; }
                         if (id === 'heart_disease') { delete next.heart_symptom_6mo; }
                         if (id === 'diabetes') { delete next.bs_level; delete next.bs_high_symptom; delete next.bs_low_symptom; }
-                        if (id === 'osteoporosis') { delete next.osteoporosis_type; }
+                        if (id === 'osteoporosis') { delete next.osteoporosis_type; delete next.osteoporosis_date; }
                         if (id === 'infectious') { delete next.infectious_hbv; delete next.infectious_hcv; delete next.infectious_tb; delete next.infectious_hiv; delete next.infectious_other; delete next.infectious_other_text; }
                         if (id === 'dental_anesthesia') { delete next.dental_anesthesia_allergy; }
                     }
@@ -524,7 +666,7 @@
                                                     {answers.diabetes && <div>• 당뇨 (BST: {answers.bs_level})</div>}
                                                     {answers.anticoagulant && <div>• 항혈전제 복용</div>}
                                                     {answers.bleeding_tendency && <div>• 출혈 소인</div>}
-                                                    {answers.osteoporosis && <div>• 골다공증 ({answers.osteoporosis_type==='injection'?'주사':'경구'})</div>}
+                                                    {answers.osteoporosis && <div>• 골다공증 ({answers.osteoporosis_type==='injection'?'주사':'경구'}) (투약시기: {answers.osteoporosis_date || '-'})</div>}
                                                     {answers.infectious && <div>• 감염성 질환</div>}
                                                     {answers.steroid && <div>• 스테로이드</div>}
                                                     {answers.endocarditis && <div>• 심내막염</div>}
@@ -690,11 +832,21 @@
                                             {answers[q.id] && q.id==='heart_disease' && (
                                                 <div className="mt-4 pt-4 border-t border-dashed"><p className="text-sm font-bold text-red-800 mb-2">{t.q_heart_symptom}</p><div className="grid grid-cols-2 gap-2"><button onClick={()=>handleValueChange('heart_symptom_6mo',true)} className={`p-2 border rounded text-sm ${answers.heart_symptom_6mo===true?'bg-red-100 border-red-500 text-red-700':''}`}>{t.yes}</button><button onClick={()=>handleValueChange('heart_symptom_6mo',false)} className={`p-2 border rounded text-sm ${answers.heart_symptom_6mo===false?'bg-slate-100 text-slate-700':''}`}>{t.no}</button></div></div>
                                             )}
+                                            {/* Modified Diabetes Section */}
                                             {answers[q.id] && q.id==='diabetes' && (
-                                                <div className="mt-4 pt-4 border-t border-dashed"><p className="text-sm font-bold text-orange-800 mb-2">{t.placeholder_bs}</p><input type="number" placeholder="mg/dL" value={answers.bs_level||''} onChange={e=>handleValueChange('bs_level',e.target.value)} className="w-full p-2 border rounded mb-2"/><div className="grid grid-cols-2 gap-2"><button onClick={()=>handleValueChange('bs_high_symptom',!answers.bs_high_symptom)} className={`p-2 border rounded text-sm ${answers.bs_high_symptom?'bg-orange-100 border-orange-500':''}`}>High Sugar Symptom</button><button onClick={()=>handleValueChange('bs_low_symptom',!answers.bs_low_symptom)} className={`p-2 border rounded text-sm ${answers.bs_low_symptom?'bg-red-100 border-red-500':''}`}>Low Sugar Symptom</button></div></div>
+                                                <div className="mt-4 pt-4 border-t border-dashed"><p className="text-sm font-bold text-orange-800 mb-2">{t.placeholder_bs}</p><input type="number" placeholder="mg/dL" value={answers.bs_level||''} onChange={e=>handleValueChange('bs_level',e.target.value)} className="w-full p-2 border rounded mb-2"/><div className="grid grid-cols-2 gap-2"><button onClick={()=>handleValueChange('bs_high_symptom',!answers.bs_high_symptom)} className={`p-2 border rounded text-sm ${answers.bs_high_symptom?'bg-orange-100 border-orange-500':''}`}>{t.lbl_high_sugar}</button><button onClick={()=>handleValueChange('bs_low_symptom',!answers.bs_low_symptom)} className={`p-2 border rounded text-sm ${answers.bs_low_symptom?'bg-red-100 border-red-500':''}`}>{t.lbl_low_sugar}</button></div></div>
                                             )}
+                                            {/* Modified Osteoporosis Section */}
                                             {answers[q.id] && q.id==='osteoporosis' && (
-                                                <div className="mt-4 pt-4 border-t border-dashed"><p className="text-sm font-bold text-slate-800 mb-2">{t.q_osteo_type}</p><div className="grid grid-cols-2 gap-2"><button onClick={()=>handleValueChange('osteoporosis_type','oral')} className={`p-2 border rounded text-sm ${answers.osteoporosis_type==='oral'?'bg-blue-100 border-blue-500':''}`}>{t.opt_oral}</button><button onClick={()=>handleValueChange('osteoporosis_type','injection')} className={`p-2 border rounded text-sm ${answers.osteoporosis_type==='injection'?'bg-red-100 border-red-500 text-red-700 font-bold':''}`}>{t.opt_inject}</button></div></div>
+                                                <div className="mt-4 pt-4 border-t border-dashed">
+                                                    <p className="text-sm font-bold text-slate-800 mb-2">{t.q_osteo_type}</p>
+                                                    <div className="grid grid-cols-2 gap-2 mb-3">
+                                                        <button onClick={()=>handleValueChange('osteoporosis_type','oral')} className={`p-2 border rounded text-sm ${answers.osteoporosis_type==='oral'?'bg-blue-100 border-blue-500':''}`}>{t.opt_oral}</button>
+                                                        <button onClick={()=>handleValueChange('osteoporosis_type','injection')} className={`p-2 border rounded text-sm ${answers.osteoporosis_type==='injection'?'bg-red-100 border-red-500 text-red-700 font-bold':''}`}>{t.opt_inject}</button>
+                                                    </div>
+                                                    <p className="text-sm font-bold text-slate-800 mb-2">{t.q_osteo_date}</p>
+                                                    <input type="text" placeholder={t.placeholder_date} value={answers.osteoporosis_date||''} onChange={e=>handleValueChange('osteoporosis_date',e.target.value)} className="w-full p-2 border rounded"/>
+                                                </div>
                                             )}
                                             {answers[q.id] && q.id==='infectious' && (
                                                 <div className="mt-4 pt-4 border-t border-dashed"><p className="text-sm font-bold text-orange-800 mb-2">{t.placeholder_infectious}</p><div className="space-y-2">{['hbv','hcv','tb','hiv','other'].map(k=><div key={k}><label className="flex items-center gap-2 p-2 border rounded hover:bg-slate-50"><input type="checkbox" checked={answers[`infectious_${k}`]||false} onChange={e=>handleValueChange(`infectious_${k}`,e.target.checked)} className="w-5 h-5"/><span>{t[`disease_${k}`]}</span></label>{k==='other'&&answers.infectious_other&&( <input type="text" placeholder={t.input_other} value={answers.infectious_other_text||''} onChange={e=>handleValueChange('infectious_other_text',e.target.value)} className="w-full mt-2 p-2 border rounded text-sm"/>)}</div>)}</div></div>
